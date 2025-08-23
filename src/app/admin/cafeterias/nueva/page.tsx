@@ -72,11 +72,13 @@ export default function NuevaCafeteriaPage() {
       const response = await fetch('/api/cities')
       const data = await response.json()
       
-      if (data.success) {
+      if (data.success && data.data) {
         setCities(data.data)
       }
     } catch (_err) {
-      console.error(_err)
+      console.error('Error loading cities:', _err)
+      // Continuar sin ciudades si hay error
+      setCities([])
     }
   }
 
@@ -85,11 +87,13 @@ export default function NuevaCafeteriaPage() {
       const response = await fetch('/api/features')
       const data = await response.json()
       
-      if (data.success) {
+      if (data.success && data.data) {
         setFeatures(data.data)
       }
     } catch (_err) {
-      console.error(_err)
+      console.error('Error loading features:', _err)
+      // Continuar sin features si hay error
+      setFeatures({})
     }
   }
 
@@ -265,11 +269,13 @@ export default function NuevaCafeteriaPage() {
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Seleccionar ciudad</option>
-                  {cities.map(city => (
+                  {cities && cities.length > 0 ? cities.map(city => (
                     <option key={city.id} value={city.id}>
                       {city.name}, {city.country}
                     </option>
-                  ))}
+                  )) : (
+                    <option value="" disabled>Cargando ciudades...</option>
+                  )}
                 </select>
               </div>
             </div>
@@ -479,17 +485,21 @@ export default function NuevaCafeteriaPage() {
                 Características
               </label>
               
-              {Object.entries(features).map(([category, categoryFeatures]) => {
+              {features && Object.keys(features).length > 0 ? Object.entries(features).map(([category, categoryFeatures]) => {
                 const categoryNames = {
                   COFFEE: 'Coffee',
                   FOOD_DRINKS: 'Food & Drinks',
                   MORE: 'More'
                 }
                 
+                if (!categoryFeatures || !Array.isArray(categoryFeatures)) {
+                  return null
+                }
+                
                 return (
                   <div key={category} className="mb-6">
                     <h4 className="text-sm font-semibold text-gray-800 mb-3">
-                      {categoryNames[category as keyof typeof categoryNames]}
+                      {categoryNames[category as keyof typeof categoryNames] || category}
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {categoryFeatures.map((feature) => (
@@ -508,7 +518,11 @@ export default function NuevaCafeteriaPage() {
                     </div>
                   </div>
                 )
-              })}
+              }) : (
+                <div className="text-sm text-gray-500 italic">
+                  Cargando características...
+                </div>
+              )}
 
               {/* Características básicas (mantener para compatibilidad) */}
               <div className="mt-6 pt-6 border-t border-gray-200">
