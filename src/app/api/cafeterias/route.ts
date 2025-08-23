@@ -168,7 +168,9 @@ export async function PUT(request: NextRequest) {
       priceRange,
       cityId,
       isActive,
-      images
+      images,
+      openingHours,
+      selectedFeatures
     } = body
 
     // Validar datos requeridos
@@ -206,6 +208,11 @@ export async function PUT(request: NextRequest) {
       updateData.imageUrl = images[0].url
     }
 
+    // Manejar horarios de apertura
+    if (openingHours) {
+      updateData.openingHours = openingHours
+    }
+
     const { data: coffeeShop, error } = await supabase
       .from('CoffeeShop')
       .update(updateData)
@@ -223,6 +230,27 @@ export async function PUT(request: NextRequest) {
         },
         { status: 500 }
       )
+    }
+
+    // Manejar características (features) si se proporcionan
+    if (selectedFeatures && Array.isArray(selectedFeatures)) {
+      // Eliminar características existentes
+      await supabase
+        .from('CoffeeShopFeature')
+        .delete()
+        .eq('coffeeShopId', id)
+
+      // Agregar nuevas características
+      if (selectedFeatures.length > 0) {
+        const featureInserts = selectedFeatures.map(featureId => ({
+          coffeeShopId: id,
+          featureId: featureId
+        }))
+
+        await supabase
+          .from('CoffeeShopFeature')
+          .insert(featureInserts)
+      }
     }
 
     return NextResponse.json({
