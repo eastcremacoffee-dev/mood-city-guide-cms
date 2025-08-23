@@ -286,7 +286,7 @@ export default function EditarCafeteriaPage() {
       // Filtrar imágenes vacías
       const validImages = formData.images.filter(img => img.url.trim() !== '')
 
-      const response = await fetch('/api/debug-put', {
+      const response = await fetch('/api/cafeterias', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

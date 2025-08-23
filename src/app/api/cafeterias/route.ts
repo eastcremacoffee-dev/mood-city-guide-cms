@@ -169,6 +169,10 @@ export async function PUT(request: NextRequest) {
       priceRange,
       cityId,
       isActive,
+      hasWifi,
+      hasOutdoor,
+      hasPower,
+      isQuiet,
       images,
       openingHours,
       selectedFeatures
@@ -189,7 +193,11 @@ export async function PUT(request: NextRequest) {
       address,
       cityId,
       priceRange: priceRange || 'MEDIUM',
-      isActive: isActive !== false
+      isActive: isActive !== false,
+      hasWifi: hasWifi === true,
+      hasOutdoor: hasOutdoor === true,
+      hasPower: hasPower === true,
+      isQuiet: isQuiet === true
     }
 
     // Solo agregar campos opcionales si tienen valor
