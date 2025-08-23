@@ -209,10 +209,8 @@ export async function PUT(request: NextRequest) {
     if (website && website.trim() !== '') updateData.website = website.trim()
     // instagram y email no existen en la BD, los omitimos por ahora
 
-    // Manejar imagen principal (primera imagen del array)
-    if (images && Array.isArray(images) && images.length > 0 && images[0].url) {
-      updateData.imageUrl = images[0].url
-    }
+    // Las imágenes se manejan en una tabla separada, no en CoffeeShop
+    // TODO: Implementar manejo de imágenes en tabla CoffeeShopImage
 
     // Manejar horarios de apertura
     if (openingHours) {
