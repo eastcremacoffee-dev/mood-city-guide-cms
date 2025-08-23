@@ -15,3 +15,4 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     persistSession: false
   }
 })
+// Deploy trigger Sat Aug 23 19:32:34 CEST 2025
