@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuario
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  avatar    String?
+  role      UserRole @default(USER)
+  
+  // Apple Sign In específico
+  appleUserId String? @unique
+  firstName   String?
+  lastName    String?
+  
+  // Sesión y tokens
+  sessionToken String?
+  lastLoginAt  DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  favorites UserFavorite[]
+  reviews   Review[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// Modelo de Ciudad
+model City {
+  id          String @id @default(cuid())
+  name        String
+  country     String
+  latitude    Float
+  longitude   Float
+  description String?
+  image       String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  coffeeShops CoffeeShop[]
+
+  @@map("cities")
+}
+
+// Modelo de Cafetería
+model CoffeeShop {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  latitude    Float
+  longitude   Float
+  phone       String?
+  website     String?
+  instagram   String?
+  email       String?
+  
+  // Horarios (JSON)
+  openingHours Json?
+  
+  // Características
+  hasWifi     Boolean @default(false)
+  hasOutdoor  Boolean @default(false)
+  hasPower    Boolean @default(false)
+  isQuiet     Boolean @default(false)
+  
+  // Precios
+  priceRange  PriceRange @default(MEDIUM)
+  
+  // Rating y Reviews
+  rating      Float @default(0)
+  reviewCount Int   @default(0)
+  
+  // Estado
+  isActive    Boolean @default(true)
+  isVerified  Boolean @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  cityId      String
+  city        City @relation(fields: [cityId], references: [id])
+  images      CoffeeShopImage[]
+  favorites   UserFavorite[]
+  reviews     Review[]
+  features    CoffeeFeature[]
+
+  @@map("coffee_shops")
+}
+
+enum PriceRange {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Modelo de Imágenes de Cafeterías
+model CoffeeShopImage {
+  id           String @id @default(cuid())
+  url          String
+  alt          String?
+  isPrimary    Boolean @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relaciones
+  coffeeShopId String
+  coffeeShop   CoffeeShop @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+
+  @@map("coffee_shop_images")
+}
+
+// Modelo de Features Predefinidas (Catálogo)
+model FeatureTemplate {
+  id          String @id @default(cuid())
+  name        String @unique
+  iconName    String // SF Symbol name
+  category    FeatureCategory
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relación con features asignadas a cafeterías
+  coffeeFeatures CoffeeFeature[]
+
+  @@map("feature_templates")
+}
+
+// Modelo de Features de Cafeterías (Relación many-to-many)
+model CoffeeFeature {
+  id           String @id @default(cuid())
+  createdAt    DateTime @default(now())
+
+  // Relaciones
+  coffeeShopId String
+  coffeeShop   CoffeeShop @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  
+  featureId    String
+  feature      FeatureTemplate @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  // Índice único para evitar duplicados
+  @@unique([coffeeShopId, featureId])
+  @@map("coffee_features")
+}
+
+// Enum para categorías de features
+enum FeatureCategory {
+  COFFEE
+  FOOD_DRINKS
+  MORE
+}
+
+// Modelo de Favoritos
+model UserFavorite {
+  id           String @id @default(cuid())
+  createdAt    DateTime @default(now())
+
+  // Relaciones
+  userId       String
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coffeeShopId String
+  coffeeShop   CoffeeShop @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, coffeeShopId])
+  @@map("user_favorites")
+}
+
+// Modelo de Reviews
+model Review {
+  id           String @id @default(cuid())
+  rating       Int // 1-5
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relaciones
+  userId       String
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coffeeShopId String
+  coffeeShop   CoffeeShop @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, coffeeShopId])
+  @@map("reviews")
+}
+
+// Modelo de Notificaciones Push
+model PushNotification {
+  id          String @id @default(cuid())
+  title       String
+  body        String
+  data        Json?
+  sentAt      DateTime?
+  scheduledAt DateTime?
+  isScheduled Boolean @default(false)
+  isSent      Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("push_notifications")
+}

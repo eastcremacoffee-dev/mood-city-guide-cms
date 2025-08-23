@@ -1,0 +1,304 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import ImageUpload from '@/components/ImageUpload'
+
+interface City {
+  id: string
+  name: string
+  country: string
+  latitude: number
+  longitude: number
+  description: string
+  image: string
+  isActive: boolean
+}
+
+export default function EditCityPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    country: '',
+    latitude: '',
+    longitude: '',
+    description: '',
+    image: '',
+    isActive: true
+  })
+
+  useEffect(() => {
+    if (params.id) {
+      fetchCity(params.id as string)
+    }
+  }, [params.id])
+
+  const fetchCity = async (id: string) => {
+    try {
+      const response = await fetch(`/api/cities/${id}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const city = data.data
+        setFormData({
+          name: city.name,
+          country: city.country,
+          latitude: city.latitude.toString(),
+          longitude: city.longitude.toString(),
+          description: city.description || '',
+          image: city.image || '',
+          isActive: city.isActive
+        })
+      } else {
+        setError('Ciudad no encontrada')
+      }
+    } catch (_err) {
+      setError('Error de conexión')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/cities', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: params.id,
+          ...formData
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        router.push(`/admin/cities/${params.id}`)
+      } else {
+        setError(data.error || 'Error al actualizar la ciudad')
+      }
+    } catch (_err) {
+      setError('Error de conexión')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando ciudad...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="text-2xl font-bold text-gray-900">
+                ☕ Mood City Guide CMS
+              </Link>
+              <span className="text-gray-400">/</span>
+              <Link href="/admin/cities" className="text-blue-600 hover:text-blue-800">
+                Ciudades
+              </Link>
+              <span className="text-gray-400">/</span>
+              <Link href={`/admin/cities/${params.id}`} className="text-blue-600 hover:text-blue-800">
+                {formData.name || 'Ciudad'}
+              </Link>
+              <span className="text-gray-400">/</span>
+              <h1 className="text-xl font-semibold text-gray-700">Editar</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow-sm rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Editar Ciudad</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Modifica los datos de la ciudad.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nombre */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre de la Ciudad *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: Madrid"
+                />
+              </div>
+
+              {/* País */}
+              <div>
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                  País *
+                </label>
+                <input
+                  type="text"
+                  id="country"
+                  name="country"
+                  required
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: España"
+                />
+              </div>
+
+              {/* Latitud */}
+              <div>
+                <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-2">
+                  Latitud *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  id="latitude"
+                  name="latitude"
+                  required
+                  value={formData.latitude}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: 40.4168"
+                />
+              </div>
+
+              {/* Longitud */}
+              <div>
+                <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-2">
+                  Longitud *
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  id="longitude"
+                  name="longitude"
+                  required
+                  value={formData.longitude}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: -3.7038"
+                />
+              </div>
+            </div>
+
+            {/* Imagen */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Imagen de la Ciudad
+              </label>
+              <ImageUpload
+                currentImage={formData.image}
+                onImageUploaded={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                folder="cities"
+              />
+              <p className="mt-2 text-sm text-gray-500">
+                Sube una imagen representativa de la ciudad (opcional)
+              </p>
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={4}
+                value={formData.description}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Descripción breve de la ciudad y su cultura cafetera..."
+              />
+            </div>
+
+            {/* Estado Activo */}
+            <div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                  Ciudad activa
+                </label>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Las ciudades inactivas no aparecerán en la aplicación
+              </p>
+            </div>
+
+            {/* Botones */}
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+              <Link
+                href={`/admin/cities/${params.id}`}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancelar
+              </Link>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  )
+}
