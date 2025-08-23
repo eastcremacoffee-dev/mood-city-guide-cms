@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { uploadImage, validateCloudinaryConfig } from '@/lib/cloudinary'
 
 export async function POST(request: NextRequest) {
   try {
+    // Validar configuración de Cloudinary
+    if (!validateCloudinaryConfig()) {
+      return NextResponse.json(
+        { success: false, error: 'Cloudinary not configured. Please check environment variables.' },
+        { status: 500 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const folder = formData.get('folder') as string || 'coffee-shops'
+    const folder = formData.get('folder') as string || 'mood-city-guide'
+    const tags = formData.get('tags') as string || 'coffee-shop'
 
     if (!file) {
       return NextResponse.json(
@@ -23,57 +32,40 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar tamaño (máximo 5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    // Validar tamaño (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: 'File too large. Maximum size is 5MB.' },
+        { success: false, error: 'File too large. Maximum size is 10MB.' },
         { status: 400 }
       )
     }
 
-    // Generar nombre único para el archivo
-    const fileExtension = file.name.split('.').pop() || 'jpg'
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`
-
-    // Convertir archivo a buffer
-    const buffer = await file.arrayBuffer()
-
-    // Subir a Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from('images')
-      .upload(fileName, buffer, {
-        contentType: file.type,
-        upsert: false
-      })
-
-    if (uploadError) {
-      console.error('Supabase upload error:', uploadError)
-      return NextResponse.json(
-        { success: false, error: 'Upload failed', details: uploadError.message },
-        { status: 500 }
-      )
-    }
-
-    // Obtener URL pública
-    const { data: urlData } = supabaseAdmin.storage
-      .from('images')
-      .getPublicUrl(fileName)
+    // Subir a Cloudinary
+    const uploadResult = await uploadImage(file, {
+      folder,
+      tags: tags.split(',').map(tag => tag.trim()),
+      context: {
+        uploaded_by: 'mood-city-guide-cms',
+        upload_date: new Date().toISOString()
+      }
+    })
 
     return NextResponse.json({
       success: true,
       data: {
-        url: urlData.publicUrl,
-        path: fileName,
-        size: file.size,
-        type: file.type
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        format: uploadResult.format
       }
     })
 
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
-      { success: false, error: 'Upload failed' },
+      { success: false, error: 'Upload failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -82,32 +74,30 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const path = searchParams.get('path')
+    const publicId = searchParams.get('publicId')
 
-    if (!path) {
+    if (!publicId) {
       return NextResponse.json(
-        { success: false, error: 'File path required' },
+        { success: false, error: 'Public ID required' },
         { status: 400 }
       )
     }
 
-    // Eliminar de Supabase Storage
-    const { error: deleteError } = await supabaseAdmin.storage
-      .from('images')
-      .remove([path])
+    // Eliminar de Cloudinary
+    const { deleteImage } = await import('@/lib/cloudinary')
+    const deleted = await deleteImage(publicId)
 
-    if (deleteError) {
-      console.error('Supabase delete error:', deleteError)
+    if (deleted) {
+      return NextResponse.json({
+        success: true,
+        message: 'Image deleted successfully'
+      })
+    } else {
       return NextResponse.json(
-        { success: false, error: 'Failed to delete image', details: deleteError.message },
+        { success: false, error: 'Failed to delete image' },
         { status: 500 }
       )
     }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Image deleted successfully'
-    })
 
   } catch (error) {
     console.error('Delete error:', error)
