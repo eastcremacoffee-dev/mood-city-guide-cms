@@ -76,8 +76,7 @@ export async function POST(request: NextRequest) {
       website,
       imageUrl,
       openingHours,
-      priceRange,
-      features
+      priceRange
     } = body
 
     // Validar datos requeridos
@@ -106,8 +105,7 @@ export async function POST(request: NextRequest) {
           website: website || null,
           imageUrl: imageUrl || null,
           openingHours: openingHours || null,
-          priceRange: priceRange || 'medium',
-          features: features || []
+          priceRange: priceRange || 'medium'
         }
       ])
       .select()
