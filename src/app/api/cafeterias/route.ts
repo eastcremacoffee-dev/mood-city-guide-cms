@@ -76,7 +76,8 @@ export async function POST(request: NextRequest) {
       website,
       imageUrl,
       openingHours,
-      priceRange
+      priceRange,
+      images
     } = body
 
     // Validar datos requeridos
@@ -90,17 +91,33 @@ export async function POST(request: NextRequest) {
     // Crear ID único basado en el nombre
     const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now()
 
+    // Determinar la imagen principal
+    let finalImageUrl = imageUrl
+    if (!finalImageUrl && images && Array.isArray(images) && images.length > 0 && images[0].url) {
+      finalImageUrl = images[0].url
+    }
+
+    // Preparar datos para insertar
+    const insertData: any = {
+      id,
+      name,
+      description: description || '',
+      address,
+      cityId
+    }
+
+    // Agregar campos opcionales si tienen valor
+    if (finalImageUrl) insertData.imageUrl = finalImageUrl
+    if (latitude && latitude !== '') insertData.latitude = parseFloat(latitude)
+    if (longitude && longitude !== '') insertData.longitude = parseFloat(longitude)
+    if (phone) insertData.phone = phone
+    if (website) insertData.website = website
+    if (openingHours) insertData.openingHours = openingHours
+    if (priceRange) insertData.priceRange = priceRange
+
     const { data: coffeeShop, error } = await supabase
       .from('CoffeeShop')
-      .insert([
-        {
-          id,
-          name,
-          description: description || '',
-          address,
-          cityId
-        }
-      ])
+      .insert([insertData])
       .select()
       .single()
 
@@ -150,7 +167,8 @@ export async function PUT(request: NextRequest) {
       email,
       priceRange,
       cityId,
-      isActive
+      isActive,
+      images
     } = body
 
     // Validar datos requeridos
@@ -182,6 +200,11 @@ export async function PUT(request: NextRequest) {
     if (website) updateData.website = website
     if (instagram) updateData.instagram = instagram
     if (email) updateData.email = email
+
+    // Manejar imagen principal (primera imagen del array)
+    if (images && Array.isArray(images) && images.length > 0 && images[0].url) {
+      updateData.imageUrl = images[0].url
+    }
 
     const { data: coffeeShop, error } = await supabase
       .from('CoffeeShop')

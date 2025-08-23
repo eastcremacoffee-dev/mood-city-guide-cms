@@ -200,9 +200,13 @@ export default function CafeteriasPage() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
                           <img
-                            className="h-12 w-12 rounded-lg object-cover"
-                            src={shop.image}
+                            className="h-12 w-12 rounded-lg object-cover bg-gray-100"
+                            src={shop.imageUrl || '/placeholder-coffee.svg'}
                             alt={shop.name}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder-coffee.svg';
+                            }}
                           />
                         </div>
                         <div className="ml-4">
