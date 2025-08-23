@@ -1,19 +1,22 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { saveImageUrl, removeImageUrl } from '@/lib/imageStorage'
 
 interface ImageUploadProps {
   currentImage?: string
   onImageUploaded: (url: string) => void
   folder?: string
   className?: string
+  coffeeShopId?: string // Para guardar en localStorage
 }
 
 export default function ImageUpload({ 
   currentImage, 
   onImageUploaded, 
   folder = 'coffee-shops',
-  className = ''
+  className = '',
+  coffeeShopId
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -61,6 +64,11 @@ export default function ImageUpload({
         setPreviewUrl(data.data.url)
         onImageUploaded(data.data.url)
         
+        // Guardar en localStorage si tenemos coffeeShopId
+        if (coffeeShopId) {
+          saveImageUrl(coffeeShopId, data.data.url)
+        }
+        
         // Limpiar preview local
         URL.revokeObjectURL(localPreview)
       } else {
@@ -78,6 +86,12 @@ export default function ImageUpload({
   const handleRemoveImage = () => {
     setPreviewUrl('')
     onImageUploaded('')
+    
+    // Remover de localStorage si tenemos coffeeShopId
+    if (coffeeShopId) {
+      removeImageUrl(coffeeShopId)
+    }
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }

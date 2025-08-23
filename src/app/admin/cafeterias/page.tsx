@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdminLayout from '../../../components/AdminLayout'
+import { getImageUrl } from '@/lib/imageStorage'
 
 interface CoffeeShop {
   id: string
@@ -201,7 +202,7 @@ export default function CafeteriasPage() {
                         <div className="flex-shrink-0 h-12 w-12">
                           <img
                             className="h-12 w-12 rounded-lg object-cover bg-gray-100"
-                            src={shop.imageUrl || '/placeholder-coffee.svg'}
+                            src={getImageUrl(shop.id) || shop.imageUrl || '/placeholder-coffee.svg'}
                             alt={shop.name}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;

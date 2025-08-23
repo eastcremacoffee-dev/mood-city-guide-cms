@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import ImageUpload from '@/components/ImageUpload'
 import AdminLayout from '@/components/AdminLayout'
+import { getImageUrl } from '@/lib/imageStorage'
 
 interface City {
   id: string
@@ -196,9 +197,10 @@ export default function EditarCafeteriaPage() {
           priceRange: shop.priceRange || 'MEDIUM',
           cityId: shop.cityId || '',
           images: (() => {
-            // Usar imageUrl como primera imagen si existe
+            // Cargar imagen desde localStorage si existe
+            const storedImageUrl = getImageUrl(id)
             const images = [
-              { url: shop.imageUrl || '', alt: shop.name || '' },
+              { url: storedImageUrl || shop.imageUrl || '', alt: shop.name || '' },
               { url: '', alt: '' },
               { url: '', alt: '' }
             ]
@@ -772,6 +774,7 @@ export default function EditarCafeteriaPage() {
                   currentImage={formData.images[0]?.url}
                   onImageUploaded={(url) => handleImageChange(0, 'url', url)}
                   folder="coffee-shops"
+                  coffeeShopId={id}
                 />
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-900 mb-2">
