@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('PUT request body:', JSON.stringify(body, null, 2))
     const {
       id,
       name,
@@ -192,16 +193,22 @@ export async function PUT(request: NextRequest) {
     }
 
     // Solo agregar campos opcionales si tienen valor
-    if (latitude && latitude !== '') {
-      updateData.latitude = parseFloat(latitude)
+    if (latitude && latitude !== '' && latitude !== null && latitude !== undefined) {
+      const lat = parseFloat(latitude)
+      if (!isNaN(lat)) {
+        updateData.latitude = lat
+      }
     }
-    if (longitude && longitude !== '') {
-      updateData.longitude = parseFloat(longitude)
+    if (longitude && longitude !== '' && longitude !== null && longitude !== undefined) {
+      const lng = parseFloat(longitude)
+      if (!isNaN(lng)) {
+        updateData.longitude = lng
+      }
     }
-    if (phone) updateData.phone = phone
-    if (website) updateData.website = website
-    if (instagram) updateData.instagram = instagram
-    if (email) updateData.email = email
+    if (phone && phone.trim() !== '') updateData.phone = phone.trim()
+    if (website && website.trim() !== '') updateData.website = website.trim()
+    if (instagram && instagram.trim() !== '') updateData.instagram = instagram.trim()
+    if (email && email.trim() !== '') updateData.email = email.trim()
 
     // Manejar imagen principal (primera imagen del array)
     if (images && Array.isArray(images) && images.length > 0 && images[0].url) {
@@ -212,6 +219,8 @@ export async function PUT(request: NextRequest) {
     if (openingHours) {
       updateData.openingHours = openingHours
     }
+
+    console.log('Update data to send to Supabase:', JSON.stringify(updateData, null, 2))
 
     const { data: coffeeShop, error } = await supabase
       .from('CoffeeShop')
