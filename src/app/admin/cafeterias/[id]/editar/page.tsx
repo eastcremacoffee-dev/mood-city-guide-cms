@@ -302,6 +302,9 @@ export default function EditarCafeteriaPage() {
           longitude: formData.longitude,
           phone: formData.phone,
           website: formData.website,
+          imageUrl: getImageUrl(id) || '', // Obtener imagen desde localStorage
+          imageUrl2: getImageUrl(`${id}_2`) || '', // Segunda imagen
+          imageUrl3: getImageUrl(`${id}_3`) || '', // Tercera imagen
           priceRange: formData.priceRange,
           cityId: formData.cityId,
           isActive: formData.isActive,
@@ -775,6 +778,7 @@ export default function EditarCafeteriaPage() {
                   onImageUploaded={(url) => handleImageChange(0, 'url', url)}
                   folder="coffee-shops"
                   coffeeShopId={id}
+                  imageIndex={1}
                 />
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -799,6 +803,8 @@ export default function EditarCafeteriaPage() {
                   currentImage={formData.images[1]?.url}
                   onImageUploaded={(url) => handleImageChange(1, 'url', url)}
                   folder="coffee-shops"
+                  coffeeShopId={id}
+                  imageIndex={2}
                 />
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -823,6 +829,8 @@ export default function EditarCafeteriaPage() {
                   currentImage={formData.images[2]?.url}
                   onImageUploaded={(url) => handleImageChange(2, 'url', url)}
                   folder="coffee-shops"
+                  coffeeShopId={id}
+                  imageIndex={3}
                 />
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-900 mb-2">

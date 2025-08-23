@@ -9,6 +9,7 @@ interface ImageUploadProps {
   folder?: string
   className?: string
   coffeeShopId?: string // Para guardar en localStorage
+  imageIndex?: number // Para identificar cuál imagen es (1, 2, 3)
 }
 
 export default function ImageUpload({ 
@@ -16,7 +17,8 @@ export default function ImageUpload({
   onImageUploaded, 
   folder = 'coffee-shops',
   className = '',
-  coffeeShopId
+  coffeeShopId,
+  imageIndex = 1
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -66,7 +68,8 @@ export default function ImageUpload({
         
         // Guardar en localStorage si tenemos coffeeShopId
         if (coffeeShopId) {
-          saveImageUrl(coffeeShopId, data.data.url)
+          const storageKey = imageIndex === 1 ? coffeeShopId : `${coffeeShopId}_${imageIndex}`
+          saveImageUrl(storageKey, data.data.url)
         }
         
         // Limpiar preview local
@@ -89,7 +92,8 @@ export default function ImageUpload({
     
     // Remover de localStorage si tenemos coffeeShopId
     if (coffeeShopId) {
-      removeImageUrl(coffeeShopId)
+      const storageKey = imageIndex === 1 ? coffeeShopId : `${coffeeShopId}_${imageIndex}`
+      removeImageUrl(storageKey)
     }
     
     if (fileInputRef.current) {

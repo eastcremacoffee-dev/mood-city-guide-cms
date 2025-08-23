@@ -166,6 +166,9 @@ export async function PUT(request: NextRequest) {
       website,
       instagram,
       email,
+      imageUrl,
+      imageUrl2,
+      imageUrl3,
       priceRange,
       cityId,
       isActive,
@@ -207,10 +210,10 @@ export async function PUT(request: NextRequest) {
     }
     if (phone && phone.trim() !== '') updateData.phone = phone.trim()
     if (website && website.trim() !== '') updateData.website = website.trim()
+    if (imageUrl && imageUrl.trim() !== '') updateData.imageUrl = imageUrl.trim()
+    if (imageUrl2 && imageUrl2.trim() !== '') updateData.imageUrl2 = imageUrl2.trim()
+    if (imageUrl3 && imageUrl3.trim() !== '') updateData.imageUrl3 = imageUrl3.trim()
     // instagram y email no existen en la BD, los omitimos por ahora
-
-    // Las imágenes se manejan en una tabla separada, no en CoffeeShop
-    // TODO: Implementar manejo de imágenes en tabla CoffeeShopImage
 
     // Manejar horarios de apertura
     if (openingHours) {
