@@ -152,8 +152,8 @@ export default function EditarCafeteriaPage() {
           name: shop.name || '',
           description: shop.description || '',
           address: shop.address || '',
-          latitude: shop.latitude?.toString() || '',
-          longitude: shop.longitude?.toString() || '',
+          latitude: shop.latitude ? shop.latitude.toString() : '',
+          longitude: shop.longitude ? shop.longitude.toString() : '',
           phone: shop.phone || '',
           website: shop.website || '',
           instagram: shop.instagram || '',
@@ -482,7 +482,7 @@ export default function EditarCafeteriaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Latitud *
+                  Latitud
                 </label>
                 <input
                   type="number"
@@ -490,7 +490,6 @@ export default function EditarCafeteriaPage() {
                   name="latitude"
                   value={formData.latitude}
                   onChange={handleInputChange}
-                  required
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="40.4168"
                 />
@@ -498,7 +497,7 @@ export default function EditarCafeteriaPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Longitud *
+                  Longitud
                 </label>
                 <input
                   type="number"
@@ -506,7 +505,6 @@ export default function EditarCafeteriaPage() {
                   name="longitude"
                   value={formData.longitude}
                   onChange={handleInputChange}
-                  required
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="-3.7038"
                 />
