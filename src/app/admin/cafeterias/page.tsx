@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdminLayout from '../../../components/AdminLayout'
+import ImageStatusWidget from '../../../components/ImageStatusWidget'
 import { getImageUrl } from '@/lib/imageStorage'
 
 interface CoffeeShop {
@@ -162,6 +163,8 @@ export default function CafeteriasPage() {
               </div>
             </div>
           </div>
+
+          <ImageStatusWidget coffeeShops={coffeeShops} />
         </div>
 
         {/* Coffee Shops Table */}
@@ -200,15 +203,23 @@ export default function CafeteriasPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
-                          <img
-                            className="h-12 w-12 rounded-lg object-cover bg-gray-100"
-                            src={getImageUrl(shop.id) || shop.imageUrl || '/placeholder-coffee.svg'}
-                            alt={shop.name}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder-coffee.svg';
-                            }}
-                          />
+                          {getImageUrl(shop.id) || shop.imageUrl ? (
+                            <img
+                              className="h-12 w-12 rounded-lg object-cover bg-gray-100"
+                              src={getImageUrl(shop.id) || shop.imageUrl || ''}
+                              alt={shop.name}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center ${getImageUrl(shop.id) || shop.imageUrl ? 'hidden' : ''}`}>
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
