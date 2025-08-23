@@ -197,11 +197,11 @@ export default function EditarCafeteriaPage() {
           priceRange: shop.priceRange || 'MEDIUM',
           cityId: shop.cityId || '',
           images: (() => {
-            const existingImages = shop.images || []
+            // Usar imageUrl como primera imagen si existe
             const images = [
-              existingImages[0] || { url: '', alt: '' },
-              existingImages[1] || { url: '', alt: '' },
-              existingImages[2] || { url: '', alt: '' }
+              { url: shop.imageUrl || '', alt: shop.name || '' },
+              { url: '', alt: '' },
+              { url: '', alt: '' }
             ]
             return images
           })(),
