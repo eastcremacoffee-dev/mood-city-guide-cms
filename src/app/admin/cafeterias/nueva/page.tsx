@@ -163,23 +163,26 @@ export default function NuevaCafeteriaPage() {
     setSuccess('')
 
     try {
-      // Filtrar imágenes vacías
-      const validImages = formData.images.filter(img => img.url.trim() !== '')
+      // Solo enviar campos básicos que funcionan
+      const basicData = {
+        name: formData.name,
+        description: formData.description,
+        address: formData.address,
+        cityId: formData.cityId
+      }
+
+      console.log('Enviando datos básicos:', basicData)
 
       const response = await fetch('/api/cafeterias', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          openingHours: formData.schedule, // Enviar horarios estructurados
-          images: validImages.length > 0 ? validImages : undefined,
-          selectedFeatures: selectedFeatures
-        }),
+        body: JSON.stringify(basicData),
       })
 
       const data = await response.json()
+      console.log('Respuesta API:', data)
 
       if (data.success) {
         setSuccess('Cafetería creada exitosamente')
@@ -188,8 +191,10 @@ export default function NuevaCafeteriaPage() {
         }, 2000)
       } else {
         setError(data.error || 'Error al crear la cafetería')
+        console.error('Error API:', data)
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error('Error de conexión:', err)
       setError('Error de conexión')
     } finally {
       setLoading(false)
