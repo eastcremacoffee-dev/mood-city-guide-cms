@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
 
 export async function GET(_request: NextRequest) {
   try {
     const startTime = Date.now()
     
-    // Verificar conexión a la base de datos
-    await prisma.$queryRaw`SELECT 1`
+    // Verificar conexión a Supabase
+    const { data, error } = await supabase
+      .from('City')
+      .select('count')
+      .limit(1)
+    
+    if (error) {
+      throw error
+    }
     
     const dbResponseTime = Date.now() - startTime
     
@@ -19,7 +26,8 @@ export async function GET(_request: NextRequest) {
       version: process.env.npm_package_version || '1.0.0',
       database: {
         status: 'connected',
-        responseTime: `${dbResponseTime}ms`
+        responseTime: `${dbResponseTime}ms`,
+        provider: 'supabase'
       },
       memory: {
         used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
@@ -27,7 +35,7 @@ export async function GET(_request: NextRequest) {
         unit: 'MB'
       },
       services: {
-        prisma: 'operational',
+        supabase: 'operational',
         nextjs: 'operational'
       }
     }
@@ -43,7 +51,7 @@ export async function GET(_request: NextRequest) {
       error: error instanceof Error ? error.message : 'Unknown error',
       environment: process.env.NODE_ENV,
       services: {
-        prisma: 'error',
+        supabase: 'error',
         nextjs: 'operational'
       }
     }

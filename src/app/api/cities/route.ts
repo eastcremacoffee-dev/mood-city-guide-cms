@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { mockCities } from '@/lib/mock-data'
+import { supabase } from '@/lib/supabase'
 
 // GET /api/cities - Obtener todas las ciudades
 export async function GET(request: NextRequest) {
@@ -8,96 +7,56 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
 
-    // Intentar usar la base de datos, si falla usar datos mock
-    try {
-      const whereClause: Record<string, unknown> = {
-        isActive: true
-      }
+    let query = supabase
+      .from('City')
+      .select('*')
+      .order('name', { ascending: true })
 
-      // Filtrar por búsqueda si se especifica
-      if (search) {
-        whereClause.OR = [
-          {
-            name: {
-              contains: search
-            }
-          },
-          {
-            country: {
-              contains: search
-            }
-          }
-        ]
-      }
-
-      const cities = await prisma.city.findMany({
-        where: whereClause,
-        include: {
-          _count: {
-            select: {
-              coffeeShops: {
-                where: {
-                  isActive: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: [
-          { name: 'asc' }
-        ]
-      })
-
-      const citiesWithStats = cities.map(city => ({
-        id: city.id,
-        name: city.name,
-        description: city.description,
-        imageUrl: city.imageUrl,
-        country: city.country,
-        isActive: city.isActive,
-        coffeeShopsCount: city._count.coffeeShops,
-        createdAt: city.createdAt,
-        updatedAt: city.updatedAt
-      }))
-
-      return NextResponse.json({
-        success: true,
-        data: citiesWithStats,
-        count: citiesWithStats.length
-      })
-    } catch (dbError) {
-      console.log('Database error, using mock data:', dbError)
-      
-      // Usar datos mock si la base de datos falla
-      let filteredCities = mockCities
-      
-      if (search) {
-        const searchLower = search.toLowerCase()
-        filteredCities = mockCities.filter(city => 
-          city.name.toLowerCase().includes(searchLower) ||
-          city.description.toLowerCase().includes(searchLower)
-        )
-      }
-
-      const citiesWithStats = filteredCities.map(city => ({
-        id: city.id,
-        name: city.name,
-        description: city.description,
-        imageUrl: city.imageUrl,
-        country: 'España',
-        isActive: true,
-        coffeeShopsCount: 1, // Mock count
-        createdAt: city.createdAt,
-        updatedAt: city.updatedAt
-      }))
-
-      return NextResponse.json({
-        success: true,
-        data: citiesWithStats,
-        count: citiesWithStats.length,
-        source: 'mock'
-      })
+    // Filtrar por búsqueda si se especifica
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,country.ilike.%${search}%`)
     }
+
+    const { data: cities, error } = await query
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Error al obtener ciudades',
+          details: error.message
+        },
+        { status: 500 }
+      )
+    }
+
+    // Obtener conteo de cafeterías para cada ciudad
+    const citiesWithStats = await Promise.all(
+      (cities || []).map(async (city) => {
+        const { count } = await supabase
+          .from('CoffeeShop')
+          .select('*', { count: 'exact', head: true })
+          .eq('cityId', city.id)
+
+        return {
+          id: city.id,
+          name: city.name,
+          description: city.description,
+          imageUrl: city.imageUrl,
+          country: city.country,
+          coffeeShopsCount: count || 0,
+          createdAt: city.createdAt,
+          updatedAt: city.updatedAt
+        }
+      })
+    )
+
+    return NextResponse.json({
+      success: true,
+      data: citiesWithStats,
+      count: citiesWithStats.length
+    })
   } catch (error) {
     console.error('Error in cities API:', error)
     return NextResponse.json(
@@ -125,42 +84,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    try {
-      const city = await prisma.city.create({
-        data: {
+    // Crear ID único basado en el nombre (slug)
+    const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+    const { data: city, error } = await supabase
+      .from('City')
+      .insert([
+        {
+          id,
           name,
           description,
           imageUrl: imageUrl || null,
-          country: country || 'España',
-          isActive: true
+          country: country || 'España'
         }
-      })
+      ])
+      .select()
+      .single()
 
-      return NextResponse.json({
-        success: true,
-        data: city
-      }, { status: 201 })
-    } catch (dbError) {
-      console.log('Database error in POST, returning mock response:', dbError)
-      
-      // Retornar respuesta mock si la base de datos falla
-      const mockCity = {
-        id: Date.now().toString(),
-        name,
-        description,
-        imageUrl: imageUrl || null,
-        country: country || 'España',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: mockCity,
-        source: 'mock'
-      }, { status: 201 })
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Error al crear ciudad',
+          details: error.message
+        },
+        { status: 500 }
+      )
     }
+
+    return NextResponse.json({
+      success: true,
+      data: city
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating city:', error)
     return NextResponse.json(
