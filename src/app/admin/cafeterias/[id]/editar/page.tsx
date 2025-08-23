@@ -68,7 +68,6 @@ export default function EditarCafeteriaPage() {
     website: '',
     instagram: '',
     email: '',
-    openingHours: '',
     schedule: {
       monday: { open: '', close: '', isClosed: false },
       tuesday: { open: '', close: '', isClosed: false },
@@ -294,8 +293,23 @@ export default function EditarCafeteriaPage() {
         },
         body: JSON.stringify({
           id,
-          ...formData,
-          openingHours: formData.schedule, // Enviar horarios estructurados
+          name: formData.name,
+          description: formData.description,
+          address: formData.address,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          phone: formData.phone,
+          website: formData.website,
+          instagram: formData.instagram,
+          email: formData.email,
+          priceRange: formData.priceRange,
+          cityId: formData.cityId,
+          isActive: formData.isActive,
+          hasWifi: formData.hasWifi,
+          hasOutdoor: formData.hasOutdoor,
+          hasPower: formData.hasPower,
+          isQuiet: formData.isQuiet,
+          openingHours: formData.schedule, // Solo enviar schedule como openingHours
           images: validImages.length > 0 ? validImages : undefined,
           selectedFeatures: selectedFeatures
         }),
