@@ -98,14 +98,7 @@ export async function POST(request: NextRequest) {
           name,
           description: description || '',
           address,
-          cityId,
-          latitude: latitude || null,
-          longitude: longitude || null,
-          phone: phone || null,
-          website: website || null,
-          imageUrl: imageUrl || null,
-          openingHours: openingHours || null,
-          priceRange: priceRange || 'medium'
+          cityId
         }
       ])
       .select()
