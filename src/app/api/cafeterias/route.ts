@@ -169,10 +169,6 @@ export async function PUT(request: NextRequest) {
       priceRange,
       cityId,
       isActive,
-      hasWifi,
-      hasOutdoor,
-      hasPower,
-      isQuiet,
       images,
       openingHours,
       selectedFeatures
@@ -193,11 +189,7 @@ export async function PUT(request: NextRequest) {
       address,
       cityId,
       priceRange: priceRange || 'MEDIUM',
-      isActive: isActive !== false,
-      hasWifi: hasWifi === true,
-      hasOutdoor: hasOutdoor === true,
-      hasPower: hasPower === true,
-      isQuiet: isQuiet === true
+      isActive: isActive !== false
     }
 
     // Solo agregar campos opcionales si tienen valor
@@ -215,8 +207,7 @@ export async function PUT(request: NextRequest) {
     }
     if (phone && phone.trim() !== '') updateData.phone = phone.trim()
     if (website && website.trim() !== '') updateData.website = website.trim()
-    if (instagram && instagram.trim() !== '') updateData.instagram = instagram.trim()
-    if (email && email.trim() !== '') updateData.email = email.trim()
+    // instagram y email no existen en la BD, los omitimos por ahora
 
     // Manejar imagen principal (primera imagen del array)
     if (images && Array.isArray(images) && images.length > 0 && images[0].url) {

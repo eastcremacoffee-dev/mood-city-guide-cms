@@ -300,15 +300,9 @@ export default function EditarCafeteriaPage() {
           longitude: formData.longitude,
           phone: formData.phone,
           website: formData.website,
-          instagram: formData.instagram,
-          email: formData.email,
           priceRange: formData.priceRange,
           cityId: formData.cityId,
           isActive: formData.isActive,
-          hasWifi: formData.hasWifi,
-          hasOutdoor: formData.hasOutdoor,
-          hasPower: formData.hasPower,
-          isQuiet: formData.isQuiet,
           openingHours: formData.schedule, // Solo enviar schedule como openingHours
           images: validImages.length > 0 ? validImages : undefined,
           selectedFeatures: selectedFeatures
