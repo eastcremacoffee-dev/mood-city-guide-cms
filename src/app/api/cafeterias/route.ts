@@ -132,3 +132,89 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// PUT /api/cafeterias - Actualizar cafetería
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const {
+      id,
+      name,
+      description,
+      address,
+      latitude,
+      longitude,
+      phone,
+      website,
+      instagram,
+      email,
+      priceRange,
+      cityId,
+      isActive
+    } = body
+
+    // Validar datos requeridos
+    if (!id || !name || !address || !cityId) {
+      return NextResponse.json(
+        { success: false, error: 'ID, nombre, dirección y ciudad son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    // Preparar datos para actualizar
+    const updateData: any = {
+      name,
+      description: description || '',
+      address,
+      cityId,
+      priceRange: priceRange || 'MEDIUM',
+      isActive: isActive !== false
+    }
+
+    // Solo agregar campos opcionales si tienen valor
+    if (latitude && latitude !== '') {
+      updateData.latitude = parseFloat(latitude)
+    }
+    if (longitude && longitude !== '') {
+      updateData.longitude = parseFloat(longitude)
+    }
+    if (phone) updateData.phone = phone
+    if (website) updateData.website = website
+    if (instagram) updateData.instagram = instagram
+    if (email) updateData.email = email
+
+    const { data: coffeeShop, error } = await supabase
+      .from('CoffeeShop')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Error al actualizar cafetería',
+          details: error.message
+        },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: coffeeShop
+    })
+  } catch (error) {
+    console.error('Error updating coffee shop:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
+  }
+}

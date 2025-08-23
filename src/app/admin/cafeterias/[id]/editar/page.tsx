@@ -140,11 +140,18 @@ export default function EditarCafeteriaPage() {
 
   const fetchCoffeeShop = async () => {
     try {
-      const response = await fetch(`/api/cafeterias?id=${id}`)
+      const response = await fetch(`/api/cafeterias`)
       const data = await response.json()
       
       if (data.success && data.data.length > 0) {
-        const shop = data.data[0]
+        // Buscar la cafetería específica por ID
+        const shop = data.data.find((cafe: any) => cafe.id === id)
+        
+        if (!shop) {
+          setError('Cafetería no encontrada')
+          setLoading(false)
+          return
+        }
         // setCoffeeShop(shop) // Removed unused state
         
         // Llenar el formulario con los datos existentes
