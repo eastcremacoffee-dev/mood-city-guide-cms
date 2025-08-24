@@ -692,7 +692,9 @@ export default function EditarCafeteriaPage() {
                 const categoryNames = {
                   COFFEE: 'Coffee',
                   FOOD_DRINKS: 'Food & Drinks',
-                  MORE: 'More'
+                  FOOD: 'Food & Drinks',
+                  MORE: 'More',
+                  AMENITIES: 'More'
                 }
                 
                 if (!categoryFeatures || !Array.isArray(categoryFeatures)) {

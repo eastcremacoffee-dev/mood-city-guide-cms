@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get('isActive')
 
     let query = supabase
-      .from('CoffeeFeatures')
+      .from('FeatureTemplate')
       .select('*')
-      .order('displayOrder', { ascending: true })
+      .order('name', { ascending: true })
     
     if (category) {
       query = query.eq('category', category)
