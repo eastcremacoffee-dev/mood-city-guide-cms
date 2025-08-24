@@ -222,6 +222,12 @@ export async function PUT(request: NextRequest) {
       updateData.openingHours = openingHours
     }
 
+    // Manejar características (features) si se proporcionan
+    if (selectedFeatures && Array.isArray(selectedFeatures)) {
+      console.log('Adding features to update data:', selectedFeatures)
+      updateData.features = selectedFeatures
+    }
+
     console.log('Update data to send to Supabase:', JSON.stringify(updateData, null, 2))
 
     const { data: coffeeShop, error } = await supabase
@@ -241,29 +247,6 @@ export async function PUT(request: NextRequest) {
         },
         { status: 500 }
       )
-    }
-
-    // Manejar características (features) si se proporcionan
-    if (selectedFeatures && Array.isArray(selectedFeatures)) {
-      console.log('Updating features for coffee shop:', id, 'with features:', selectedFeatures)
-      
-      // Actualizar las features directamente en la columna features de CoffeeShop
-      const { error: featuresError } = await supabase
-        .from('CoffeeShop')
-        .update({ features: selectedFeatures })
-        .eq('id', id)
-
-      if (featuresError) {
-        console.error('Error updating features:', featuresError)
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Error al actualizar características',
-            details: featuresError.message
-          },
-          { status: 500 }
-        )
-      }
     }
 
     return NextResponse.json({
