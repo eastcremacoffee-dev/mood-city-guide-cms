@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { supabaseAdmin } from '@/lib/supabase'
 
 // GET /api/reviews - Obtener todas las reviews (con filtros opcionales)
 export async function GET(request: NextRequest) {
@@ -10,43 +10,62 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    const whereClause: Record<string, unknown> = {}
+    // Construir la query para Supabase
+    let query = supabaseAdmin
+      .from('reviews')
+      .select(`
+        id,
+        rating,
+        comment,
+        created_at,
+        updated_at,
+        user:users!reviews_user_id_fkey (
+          id,
+          name,
+          avatar
+        ),
+        coffee_shop:coffee_shops!reviews_coffee_shop_id_fkey (
+          id,
+          name
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (coffeeShopId) {
-      whereClause.coffeeShopId = coffeeShopId
+      query = query.eq('coffee_shop_id', coffeeShopId)
     }
 
     if (userId) {
-      whereClause.userId = userId
+      query = query.eq('user_id', userId)
     }
 
-    const reviews = await prisma.review.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
-          }
-        },
-        coffeeShop: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit,
-      skip: offset
-    })
+    const { data: reviews, error: reviewsError, count } = await query
 
-    const totalCount = await prisma.review.count({
-      where: whereClause
-    })
+    if (reviewsError) {
+      console.error('Supabase error fetching reviews:', reviewsError)
+      throw reviewsError
+    }
+
+    // Obtener el total count
+    let countQuery = supabaseAdmin
+      .from('reviews')
+      .select('*', { count: 'exact', head: true })
+
+    if (coffeeShopId) {
+      countQuery = countQuery.eq('coffee_shop_id', coffeeShopId)
+    }
+
+    if (userId) {
+      countQuery = countQuery.eq('user_id', userId)
+    }
+
+    const { count: totalCount, error: countError } = await countQuery
+
+    if (countError) {
+      console.error('Supabase error counting reviews:', countError)
+      throw countError
+    }
 
     return NextResponse.json({
       success: true,
@@ -89,23 +108,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que el usuario y la cafetería existen
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
+    // Verificar que el usuario existe (o crearlo si no existe)
+    let { data: user, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id, name, avatar')
+      .eq('id', userId)
+      .single()
 
-    if (!user) {
+    if (userError && userError.code === 'PGRST116') {
+      // Usuario no existe, crearlo
+      const { data: newUser, error: createUserError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          id: userId,
+          name: 'Usuario Anónimo',
+          role: 'USER'
+        })
+        .select('id, name, avatar')
+        .single()
+
+      if (createUserError) {
+        console.error('Error creating user:', createUserError)
+        return NextResponse.json(
+          { success: false, error: 'Error al crear usuario' },
+          { status: 500 }
+        )
+      }
+
+      user = newUser
+    } else if (userError) {
+      console.error('Error fetching user:', userError)
       return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
-        { status: 404 }
+        { success: false, error: 'Error al verificar usuario' },
+        { status: 500 }
       )
     }
 
-    const coffeeShop = await prisma.coffeeShop.findUnique({
-      where: { id: coffeeShopId }
-    })
+    // Verificar que la cafetería existe
+    const { data: coffeeShop, error: coffeeShopError } = await supabaseAdmin
+      .from('coffee_shops')
+      .select('id, name')
+      .eq('id', coffeeShopId)
+      .single()
 
-    if (!coffeeShop) {
+    if (coffeeShopError) {
+      console.error('Error fetching coffee shop:', coffeeShopError)
       return NextResponse.json(
         { success: false, error: 'Cafetería no encontrada' },
         { status: 404 }
@@ -113,14 +160,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar si ya existe una review del usuario para esta cafetería
-    const existingReview = await prisma.review.findUnique({
-      where: {
-        userId_coffeeShopId: {
-          userId,
-          coffeeShopId
-        }
-      }
-    })
+    const { data: existingReview, error: existingReviewError } = await supabaseAdmin
+      .from('reviews')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('coffee_shop_id', coffeeShopId)
+      .single()
 
     if (existingReview) {
       return NextResponse.json(
@@ -130,29 +175,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear la review
-    const review = await prisma.review.create({
-      data: {
-        userId,
-        coffeeShopId,
+    const { data: review, error: reviewError } = await supabaseAdmin
+      .from('reviews')
+      .insert({
+        user_id: userId,
+        coffee_shop_id: coffeeShopId,
         rating,
         comment: comment || null
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
-          }
-        },
-        coffeeShop: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      }
-    })
+      })
+      .select(`
+        id,
+        rating,
+        comment,
+        created_at,
+        updated_at,
+        user:users!reviews_user_id_fkey (
+          id,
+          name,
+          avatar
+        ),
+        coffee_shop:coffee_shops!reviews_coffee_shop_id_fkey (
+          id,
+          name
+        )
+      `)
+      .single()
+
+    if (reviewError) {
+      console.error('Error creating review:', reviewError)
+      return NextResponse.json(
+        { success: false, error: 'Error al crear la review' },
+        { status: 500 }
+      )
+    }
 
     // Actualizar el rating promedio de la cafetería
     await updateCoffeeShopRating(coffeeShopId)
@@ -173,21 +228,30 @@ export async function POST(request: NextRequest) {
 
 // Función helper para actualizar el rating promedio de una cafetería
 async function updateCoffeeShopRating(coffeeShopId: string) {
-  const reviews = await prisma.review.findMany({
-    where: { coffeeShopId },
-    select: { rating: true }
-  })
+  const { data: reviews, error: reviewsError } = await supabaseAdmin
+    .from('reviews')
+    .select('rating')
+    .eq('coffee_shop_id', coffeeShopId)
 
-  if (reviews.length > 0) {
+  if (reviewsError) {
+    console.error('Error fetching reviews for rating update:', reviewsError)
+    return
+  }
+
+  if (reviews && reviews.length > 0) {
     const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     const reviewCount = reviews.length
 
-    await prisma.coffeeShop.update({
-      where: { id: coffeeShopId },
-      data: {
+    const { error: updateError } = await supabaseAdmin
+      .from('coffee_shops')
+      .update({
         rating: Math.round(averageRating * 10) / 10, // Redondear a 1 decimal
-        reviewCount
-      }
-    })
+        review_count: reviewCount
+      })
+      .eq('id', coffeeShopId)
+
+    if (updateError) {
+      console.error('Error updating coffee shop rating:', updateError)
+    }
   }
 }
