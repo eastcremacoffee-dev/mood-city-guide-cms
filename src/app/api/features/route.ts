@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
     const isActive = searchParams.get('isActive')
 
     let query = supabase
-      .from('FeatureTemplate')
+      .from('CoffeeFeatures')
       .select('*')
-      .order('name', { ascending: true })
+      .order('displayOrder', { ascending: true })
     
     if (category) {
       query = query.eq('category', category)
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now()
 
     const { data: feature, error } = await supabase
-      .from('FeatureTemplate')
+      .from('CoffeeFeatures')
       .insert([
         {
           id,

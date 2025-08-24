@@ -18,7 +18,10 @@ interface Feature {
   name: string
   iconName: string
   category: string
+  displayOrder: number
   isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 interface CoffeeShop {
@@ -119,7 +122,16 @@ export default function EditarCafeteriaPage() {
       const data = await response.json()
       
       if (data.success && data.data) {
-        setFeatures(data.data)
+        // Agrupar features por categoría
+        const groupedFeatures = data.data.reduce((acc: {[key: string]: Feature[]}, feature: Feature) => {
+          if (!acc[feature.category]) {
+            acc[feature.category] = []
+          }
+          acc[feature.category].push(feature)
+          return acc
+        }, {})
+        
+        setFeatures(groupedFeatures)
       }
     } catch (_err) {
       console.error('Error loading features:', _err)
@@ -128,12 +140,12 @@ export default function EditarCafeteriaPage() {
     }
   }
 
-  const handleFeatureToggle = (featureId: string) => {
+  const handleFeatureToggle = (featureName: string) => {
     setSelectedFeatures(prev => {
-      if (prev.includes(featureId)) {
-        return prev.filter(id => id !== featureId)
+      if (prev.includes(featureName)) {
+        return prev.filter(name => name !== featureName)
       } else {
-        return [...prev, featureId]
+        return [...prev, featureName]
       }
     })
   }
@@ -211,7 +223,11 @@ export default function EditarCafeteriaPage() {
 
         // Cargar features seleccionadas
         if (shop.features && shop.features.length > 0) {
-          const currentFeatures = shop.features.map((f: Feature) => f.id)
+          // Si shop.features es un array de strings (desde Supabase), usarlo directamente
+          // Si es un array de objetos Feature, extraer los IDs
+          const currentFeatures = Array.isArray(shop.features) 
+            ? shop.features.map((f: any) => typeof f === 'string' ? f : f.id || f.name)
+            : []
           setSelectedFeatures(currentFeatures)
         }
       } else {
@@ -693,8 +709,8 @@ export default function EditarCafeteriaPage() {
                         <label key={feature.id} className="flex items-center p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={selectedFeatures.includes(feature.id)}
-                            onChange={() => handleFeatureToggle(feature.id)}
+                            checked={selectedFeatures.includes(feature.name)}
+                            onChange={() => handleFeatureToggle(feature.name)}
                             className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
                           <span className="text-sm text-gray-700 flex-1">
