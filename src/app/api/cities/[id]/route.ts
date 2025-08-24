@@ -87,15 +87,24 @@ export async function PUT(
     // Validar datos requeridos
     if (!name || !description || !country) {
       return NextResponse.json(
-        { success: false, error: 'Nombre, descripción y país son requeridos' },
+        { 
+          success: false, 
+          error: 'Nombre, descripción y país son requeridos',
+          received: { name, description, country, latitude, longitude }
+        },
         { status: 400 }
       )
     }
 
-    // Validar coordenadas
-    if (!latitude || !longitude) {
+    // Validar coordenadas (permitir 0 como valor válido)
+    if (latitude === undefined || latitude === null || latitude === '' ||
+        longitude === undefined || longitude === null || longitude === '') {
       return NextResponse.json(
-        { success: false, error: 'Latitud y longitud son requeridas' },
+        { 
+          success: false, 
+          error: 'Latitud y longitud son requeridas',
+          received: { latitude, longitude, types: { lat: typeof latitude, lng: typeof longitude } }
+        },
         { status: 400 }
       )
     }

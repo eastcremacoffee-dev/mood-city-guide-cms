@@ -50,8 +50,8 @@ export default function EditCityPage() {
         setFormData({
           name: city.name,
           country: city.country,
-          latitude: city.latitude.toString(),
-          longitude: city.longitude.toString(),
+          latitude: city.latitude ? city.latitude.toString() : '',
+          longitude: city.longitude ? city.longitude.toString() : '',
           description: city.description || '',
           image: city.image || '',
           isActive: city.isActive

@@ -59,8 +59,7 @@ export default function ImageUpload({
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
 
-      // TEMPORAL: Usar endpoint de prueba para debugging
-      const response = await fetch(`/api/test-upload`, {
+      const response = await fetch(`/api/upload?folder=${folder}`, {
         method: 'POST',
         body: formData,
         signal: controller.signal
@@ -71,10 +70,17 @@ export default function ImageUpload({
       const data = await response.json()
 
       if (data.success) {
-        // TEMPORAL: Solo mostrar info de debug, no subir realmente
-        console.log('Test upload successful:', data)
-        setError(`DEBUG: Archivo recibido correctamente. Tamaño: ${data.fileInfo?.size} bytes, Tipo: ${data.fileInfo?.type}`)
-        setPreviewUrl(currentImage || '')
+        setPreviewUrl(data.data.url)
+        onImageUploaded(data.data.url)
+        
+        // Guardar en localStorage si tenemos coffeeShopId
+        if (coffeeShopId) {
+          const storageKey = imageIndex === 1 ? coffeeShopId : `${coffeeShopId}_${imageIndex}`
+          saveImageUrl(storageKey, data.data.url)
+        }
+        
+        // Limpiar preview local
+        URL.revokeObjectURL(localPreview)
       } else {
         const errorMsg = data.error || 'Error al subir la imagen'
         const errorDetails = data.details ? ` (${data.details})` : ''
