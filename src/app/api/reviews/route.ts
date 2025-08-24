@@ -6,75 +6,54 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const coffeeShopId = searchParams.get('coffeeShopId')
-    const userId = searchParams.get('userId')
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Construir la query para Supabase
-    let query = supabaseAdmin
-      .from('reviews')
-      .select(`
-        id,
-        rating,
-        comment,
-        created_at,
-        updated_at,
-        user:users!reviews_user_id_fkey (
-          id,
-          name,
-          avatar
-        ),
-        coffee_shop:coffee_shops!reviews_coffee_shop_id_fkey (
-          id,
-          name
-        )
-      `)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (coffeeShopId) {
-      query = query.eq('coffee_shop_id', coffeeShopId)
+    if (!coffeeShopId) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        pagination: {
+          total: 0,
+          limit,
+          offset,
+          hasMore: false
+        }
+      })
     }
 
-    if (userId) {
-      query = query.eq('user_id', userId)
+    // Obtener las reviews desde el campo JSON de la cafetería
+    const { data: coffeeShop, error } = await supabaseAdmin
+      .from('CoffeeShop')
+      .select('reviews')
+      .eq('id', coffeeShopId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching coffee shop reviews:', error)
+      return NextResponse.json({
+        success: true,
+        data: [],
+        pagination: {
+          total: 0,
+          limit,
+          offset,
+          hasMore: false
+        }
+      })
     }
 
-    const { data: reviews, error: reviewsError, count } = await query
-
-    if (reviewsError) {
-      console.error('Supabase error fetching reviews:', reviewsError)
-      throw reviewsError
-    }
-
-    // Obtener el total count
-    let countQuery = supabaseAdmin
-      .from('reviews')
-      .select('*', { count: 'exact', head: true })
-
-    if (coffeeShopId) {
-      countQuery = countQuery.eq('coffee_shop_id', coffeeShopId)
-    }
-
-    if (userId) {
-      countQuery = countQuery.eq('user_id', userId)
-    }
-
-    const { count: totalCount, error: countError } = await countQuery
-
-    if (countError) {
-      console.error('Supabase error counting reviews:', countError)
-      throw countError
-    }
+    const reviews = coffeeShop?.reviews || []
+    const paginatedReviews = reviews.slice(offset, offset + limit)
 
     return NextResponse.json({
       success: true,
-      data: reviews,
+      data: paginatedReviews,
       pagination: {
-        total: totalCount,
+        total: reviews.length,
         limit,
         offset,
-        hasMore: offset + limit < totalCount
+        hasMore: offset + limit < reviews.length
       }
     })
 
@@ -93,6 +72,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId, coffeeShopId, rating, comment } = body
 
+    console.log('Creating review:', { userId, coffeeShopId, rating, comment })
+
     // Validaciones
     if (!userId || !coffeeShopId || !rating) {
       return NextResponse.json(
@@ -108,46 +89,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que el usuario existe (o crearlo si no existe)
-    let { data: user, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('id, name, avatar')
-      .eq('id', userId)
-      .single()
-
-    if (userError && userError.code === 'PGRST116') {
-      // Usuario no existe, crearlo
-      const { data: newUser, error: createUserError } = await supabaseAdmin
-        .from('users')
-        .insert({
-          id: userId,
-          name: 'Usuario Anónimo',
-          role: 'USER'
-        })
-        .select('id, name, avatar')
-        .single()
-
-      if (createUserError) {
-        console.error('Error creating user:', createUserError)
-        return NextResponse.json(
-          { success: false, error: 'Error al crear usuario' },
-          { status: 500 }
-        )
-      }
-
-      user = newUser
-    } else if (userError) {
-      console.error('Error fetching user:', userError)
-      return NextResponse.json(
-        { success: false, error: 'Error al verificar usuario' },
-        { status: 500 }
-      )
-    }
-
     // Verificar que la cafetería existe
     const { data: coffeeShop, error: coffeeShopError } = await supabaseAdmin
-      .from('coffee_shops')
-      .select('id, name')
+      .from('CoffeeShop')
+      .select('id, name, reviews, rating, reviewCount')
       .eq('id', coffeeShopId)
       .single()
 
@@ -159,13 +104,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Obtener reviews existentes
+    const existingReviews = coffeeShop.reviews || []
+
     // Verificar si ya existe una review del usuario para esta cafetería
-    const { data: existingReview, error: existingReviewError } = await supabaseAdmin
-      .from('reviews')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('coffee_shop_id', coffeeShopId)
-      .single()
+    const existingReview = existingReviews.find((review: any) => review.userId === userId)
 
     if (existingReview) {
       return NextResponse.json(
@@ -174,47 +117,61 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Crear la review
-    const { data: review, error: reviewError } = await supabaseAdmin
-      .from('reviews')
-      .insert({
-        user_id: userId,
-        coffee_shop_id: coffeeShopId,
-        rating,
-        comment: comment || null
+    // Crear la nueva review
+    const newReview = {
+      id: `review-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      userId,
+      rating,
+      comment: comment || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      user: {
+        id: userId,
+        name: 'Usuario Anónimo',
+        avatar: null
+      }
+    }
+
+    // Agregar la nueva review
+    const updatedReviews = [...existingReviews, newReview]
+
+    // Calcular nuevo rating promedio
+    const totalRating = updatedReviews.reduce((sum, review) => sum + review.rating, 0)
+    const averageRating = totalRating / updatedReviews.length
+    const reviewCount = updatedReviews.length
+
+    // Actualizar la cafetería con las nuevas reviews y rating
+    const { data: updatedCoffeeShop, error: updateError } = await supabaseAdmin
+      .from('CoffeeShop')
+      .update({
+        reviews: updatedReviews,
+        rating: Math.round(averageRating * 10) / 10, // Redondear a 1 decimal
+        reviewCount: reviewCount
       })
-      .select(`
-        id,
-        rating,
-        comment,
-        created_at,
-        updated_at,
-        user:users!reviews_user_id_fkey (
-          id,
-          name,
-          avatar
-        ),
-        coffee_shop:coffee_shops!reviews_coffee_shop_id_fkey (
-          id,
-          name
-        )
-      `)
+      .eq('id', coffeeShopId)
+      .select()
       .single()
 
-    if (reviewError) {
-      console.error('Error creating review:', reviewError)
+    if (updateError) {
+      console.error('Error updating coffee shop with review:', updateError)
       return NextResponse.json(
-        { success: false, error: 'Error al crear la review' },
+        { success: false, error: 'Error al guardar la review' },
         { status: 500 }
       )
     }
 
-    // Actualizar el rating promedio de la cafetería
-    await updateCoffeeShopRating(coffeeShopId)
+    // Preparar la respuesta con la estructura esperada
+    const reviewResponse = {
+      ...newReview,
+      coffee_shop: {
+        id: coffeeShop.id,
+        name: coffeeShop.name
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      data: review
+      data: reviewResponse
     }, { status: 201 })
 
   } catch (error) {
@@ -223,35 +180,5 @@ export async function POST(request: NextRequest) {
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }
     )
-  }
-}
-
-// Función helper para actualizar el rating promedio de una cafetería
-async function updateCoffeeShopRating(coffeeShopId: string) {
-  const { data: reviews, error: reviewsError } = await supabaseAdmin
-    .from('reviews')
-    .select('rating')
-    .eq('coffee_shop_id', coffeeShopId)
-
-  if (reviewsError) {
-    console.error('Error fetching reviews for rating update:', reviewsError)
-    return
-  }
-
-  if (reviews && reviews.length > 0) {
-    const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-    const reviewCount = reviews.length
-
-    const { error: updateError } = await supabaseAdmin
-      .from('coffee_shops')
-      .update({
-        rating: Math.round(averageRating * 10) / 10, // Redondear a 1 decimal
-        review_count: reviewCount
-      })
-      .eq('id', coffeeShopId)
-
-    if (updateError) {
-      console.error('Error updating coffee shop rating:', updateError)
-    }
   }
 }
