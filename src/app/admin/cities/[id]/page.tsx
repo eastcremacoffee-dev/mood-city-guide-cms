@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import AdminLayout from '@/components/AdminLayout'
 
 interface CoffeeShop {
   id: string
@@ -92,19 +93,18 @@ export default function CityDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando ciudad...</p>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   if (error || !city) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <AdminLayout>
+        <div className="text-center py-12">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
@@ -115,54 +115,49 @@ export default function CityDetailPage() {
             Volver a Ciudades
           </Link>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-2xl font-bold text-gray-900">
-                ☕ Mood City Guide CMS
-              </Link>
-              <span className="text-gray-400">/</span>
-              <Link href="/admin/cities" className="text-blue-600 hover:text-blue-800">
-                Ciudades
-              </Link>
-              <span className="text-gray-400">/</span>
-              <h1 className="text-xl font-semibold text-gray-700">{city.name}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href={`/admin/cities/${city.id}/editar`}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Editar
-              </Link>
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Eliminar
-              </button>
-            </div>
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{city.name}</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {city.country} • {city.isActive ? 'Activa' : 'Inactiva'}
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/admin/cities"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              ← Volver a Ciudades
+            </Link>
+            <Link
+              href={`/admin/cities/${city.id}/editar`}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Editar
+            </Link>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Eliminar
+            </button>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* City Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info Card */}
@@ -315,7 +310,7 @@ export default function CityDetailPage() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Delete Modal */}
       {showDeleteModal && (
@@ -359,6 +354,6 @@ export default function CityDetailPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   )
 }
