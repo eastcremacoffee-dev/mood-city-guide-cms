@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { geocodeCity } from '@/lib/cityGeocoding'
 
 // GET /api/cities/[id] - Obtener ciudad por ID
 export async function GET(
@@ -82,7 +83,7 @@ export async function PUT(
   try {
     const { id } = await context.params
     const body = await request.json()
-    const { name, description, image, country, latitude, longitude, isActive } = body
+    const { name, description, image, country, isActive } = body
 
     // Validar datos requeridos
     if (!name || !description || !country) {
@@ -90,20 +91,25 @@ export async function PUT(
         { 
           success: false, 
           error: 'Nombre, descripción y país son requeridos',
-          received: { name, description, country, latitude, longitude }
+          received: { name, description, country }
         },
         { status: 400 }
       )
     }
 
-    // Validar coordenadas (permitir 0 como valor válido)
-    if (latitude === undefined || latitude === null || latitude === '' ||
-        longitude === undefined || longitude === null || longitude === '') {
+    console.log(`🌍 Iniciando geocoding para actualización de ciudad: ${name}, ${country}`)
+
+    // Obtener coordenadas automáticamente
+    let coordinates
+    try {
+      coordinates = await geocodeCity(name, country)
+    } catch (geocodingError) {
+      console.error('Error en geocoding:', geocodingError)
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Latitud y longitud son requeridas',
-          received: { latitude, longitude, types: { lat: typeof latitude, lng: typeof longitude } }
+          error: 'No se pudieron obtener las coordenadas de la ciudad. Verifica que el nombre y país sean correctos.',
+          details: geocodingError instanceof Error ? geocodingError.message : 'Error desconocido'
         },
         { status: 400 }
       )
@@ -116,8 +122,8 @@ export async function PUT(
         description,
         imageUrl: image || null,
         country,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         isActive: isActive !== undefined ? isActive : true,
         updatedAt: new Date().toISOString()
       })

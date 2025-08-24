@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { geocodeCity } from '@/lib/cityGeocoding'
 
 // GET /api/cities - Obtener todas las ciudades
 export async function GET(request: NextRequest) {
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, image, country, latitude, longitude } = body
+    const { name, description, image, country } = body
 
     // Validar datos requeridos
     if (!name || !description || !country) {
@@ -86,10 +87,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar coordenadas
-    if (!latitude || !longitude) {
+    console.log(`🌍 Iniciando geocoding para ciudad: ${name}, ${country}`)
+
+    // Obtener coordenadas automáticamente
+    let coordinates
+    try {
+      coordinates = await geocodeCity(name, country)
+    } catch (geocodingError) {
+      console.error('Error en geocoding:', geocodingError)
       return NextResponse.json(
-        { success: false, error: 'Latitud y longitud son requeridas' },
+        { 
+          success: false, 
+          error: 'No se pudieron obtener las coordenadas de la ciudad. Verifica que el nombre y país sean correctos.',
+          details: geocodingError instanceof Error ? geocodingError.message : 'Error desconocido'
+        },
         { status: 400 }
       )
     }
@@ -106,8 +117,8 @@ export async function POST(request: NextRequest) {
           description,
           imageUrl: image || null,
           country,
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude),
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           isActive: true
         }
       ])

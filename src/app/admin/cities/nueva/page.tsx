@@ -14,8 +14,6 @@ export default function NewCityPage() {
   const [formData, setFormData] = useState({
     name: '',
     country: '',
-    latitude: '',
-    longitude: '',
     description: '',
     image: ''
   })
@@ -122,41 +120,7 @@ export default function NewCityPage() {
                 />
               </div>
 
-              {/* Latitud */}
-              <div>
-                <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-2">
-                  Latitud *
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  id="latitude"
-                  name="latitude"
-                  required
-                  value={formData.latitude}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 40.4168"
-                />
-              </div>
 
-              {/* Longitud */}
-              <div>
-                <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-2">
-                  Longitud *
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  id="longitude"
-                  name="longitude"
-                  required
-                  value={formData.longitude}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: -3.7038"
-                />
-              </div>
             </div>
 
             {/* URL de Imagen */}
