@@ -32,15 +32,13 @@ export async function GET(
         address,
         phone,
         website,
-        instagram,
         rating,
-        reviewCount,
-        priceRange,
-        isActive,
-        createdAt
+        "reviewCount",
+        "priceRange",
+        "isActive",
+        "createdAt"
       `)
       .eq('cityId', id)
-      .eq('isActive', true)
       .order('name', { ascending: true })
 
     if (coffeeShopsError) {
@@ -107,7 +105,7 @@ export async function PUT(
       .update({
         name,
         description,
-        image: image || null,
+        imageUrl: image || null,
         country,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
