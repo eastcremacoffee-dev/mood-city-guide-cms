@@ -81,10 +81,7 @@ export default function EditarCafeteriaPage() {
       saturday: { open: '', close: '', isClosed: false },
       sunday: { open: '', close: '', isClosed: false }
     },
-    hasWifi: false,
-    hasOutdoor: false,
-    hasPower: false,
-    isQuiet: false,
+
     priceRange: 'MEDIUM',
     cityId: '',
     images: [
@@ -202,10 +199,7 @@ export default function EditarCafeteriaPage() {
               sunday: { open: '', close: '', isClosed: false }
             }
           })(),
-          hasWifi: shop.hasWifi || false,
-          hasOutdoor: shop.hasOutdoor || false,
-          hasPower: shop.hasPower || false,
-          isQuiet: shop.isQuiet || false,
+
           priceRange: shop.priceRange || 'MEDIUM',
           cityId: shop.cityId || '',
           images: (() => {
@@ -729,55 +723,7 @@ export default function EditarCafeteriaPage() {
                 </div>
               )}
 
-              {/* Características básicas (mantener para compatibilidad) */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-800 mb-3">Características Básicas</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasWifi"
-                      checked={formData.hasWifi}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">WiFi (legacy)</span>
-                  </label>
 
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasOutdoor"
-                      checked={formData.hasOutdoor}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Terraza (legacy)</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasPower"
-                      checked={formData.hasPower}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Enchufes (legacy)</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="isQuiet"
-                      checked={formData.isQuiet}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Silencioso (legacy)</span>
-                  </label>
-                </div>
-              </div>
             </div>
 
             {/* Imágenes de la Cafetería */}

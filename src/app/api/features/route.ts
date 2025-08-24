@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now()
 
     const { data: feature, error } = await supabase
-      .from('CoffeeFeatures')
+      .from('FeatureTemplate')
       .insert([
         {
           id,
