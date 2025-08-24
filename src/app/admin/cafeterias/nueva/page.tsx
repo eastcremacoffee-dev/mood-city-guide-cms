@@ -49,10 +49,7 @@ export default function NuevaCafeteriaPage() {
       saturday: { open: '', close: '', isClosed: false },
       sunday: { open: '', close: '', isClosed: false }
     },
-    hasWifi: false,
-    hasOutdoor: false,
-    hasPower: false,
-    isQuiet: false,
+
     priceRange: 'MEDIUM',
     cityId: '',
     images: [
@@ -88,7 +85,16 @@ export default function NuevaCafeteriaPage() {
       const data = await response.json()
       
       if (data.success && data.data) {
-        setFeatures(data.data)
+        // Agrupar features por categoría
+        const groupedFeatures = data.data.reduce((acc: {[key: string]: Feature[]}, feature: Feature) => {
+          if (!acc[feature.category]) {
+            acc[feature.category] = []
+          }
+          acc[feature.category].push(feature)
+          return acc
+        }, {})
+        
+        setFeatures(groupedFeatures)
       }
     } catch (_err) {
       console.error('Error loading features:', _err)
@@ -97,12 +103,12 @@ export default function NuevaCafeteriaPage() {
     }
   }
 
-  const handleFeatureToggle = (featureId: string) => {
+  const handleFeatureToggle = (featureName: string) => {
     setSelectedFeatures(prev => {
-      if (prev.includes(featureId)) {
-        return prev.filter(id => id !== featureId)
+      if (prev.includes(featureName)) {
+        return prev.filter(name => name !== featureName)
       } else {
-        return [...prev, featureId]
+        return [...prev, featureName]
       }
     })
   }
@@ -487,7 +493,9 @@ export default function NuevaCafeteriaPage() {
                 const categoryNames = {
                   COFFEE: 'Coffee',
                   FOOD_DRINKS: 'Food & Drinks',
-                  MORE: 'More'
+                  FOOD: 'Food & Drinks',
+                  MORE: 'More',
+                  AMENITIES: 'More'
                 }
                 
                 if (!categoryFeatures || !Array.isArray(categoryFeatures)) {
@@ -504,8 +512,8 @@ export default function NuevaCafeteriaPage() {
                         <label key={feature.id} className="flex items-center p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={selectedFeatures.includes(feature.id)}
-                            onChange={() => handleFeatureToggle(feature.id)}
+                            checked={selectedFeatures.includes(feature.name)}
+                            onChange={() => handleFeatureToggle(feature.name)}
                             className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
                           <span className="text-sm text-gray-700 flex-1">
@@ -522,55 +530,7 @@ export default function NuevaCafeteriaPage() {
                 </div>
               )}
 
-              {/* Características básicas (mantener para compatibilidad) */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-800 mb-3">Características Básicas</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasWifi"
-                      checked={formData.hasWifi}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">WiFi (legacy)</span>
-                  </label>
 
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasOutdoor"
-                      checked={formData.hasOutdoor}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Terraza (legacy)</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasPower"
-                      checked={formData.hasPower}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Enchufes (legacy)</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="isQuiet"
-                      checked={formData.isQuiet}
-                      onChange={handleInputChange}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-700">Silencioso (legacy)</span>
-                  </label>
-                </div>
-              </div>
             </div>
 
             {/* Imágenes de la Cafetería */}
