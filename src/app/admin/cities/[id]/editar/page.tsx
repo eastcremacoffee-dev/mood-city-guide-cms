@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import AdminLayout from '@/components/AdminLayout'
 import ImageUpload from '@/components/ImageUpload'
 
 interface City {
@@ -79,15 +80,12 @@ export default function EditCityPage() {
     setError('')
 
     try {
-      const response = await fetch('/api/cities', {
+      const response = await fetch(`/api/cities/${params.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          id: params.id,
-          ...formData
-        }),
+        body: JSON.stringify(formData),
       })
 
       const data = await response.json()
@@ -106,51 +104,38 @@ export default function EditCityPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando ciudad...</p>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="text-2xl font-bold text-gray-900">
-                ☕ Mood City Guide CMS
-              </Link>
-              <span className="text-gray-400">/</span>
-              <Link href="/admin/cities" className="text-blue-600 hover:text-blue-800">
-                Ciudades
-              </Link>
-              <span className="text-gray-400">/</span>
-              <Link href={`/admin/cities/${params.id}`} className="text-blue-600 hover:text-blue-800">
-                {formData.name || 'Ciudad'}
-              </Link>
-              <span className="text-gray-400">/</span>
-              <h1 className="text-xl font-semibold text-gray-700">Editar</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Editar Ciudad</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              Modifica los datos de la ciudad.
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Editar Ciudad</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Modifica los datos de la ciudad: {formData.name || 'Cargando...'}
             </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
+          <div className="flex items-center space-x-3">
+            <Link
+              href={`/admin/cities/${params.id}`}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              ← Volver a Ciudad
+            </Link>
+          </div>
+        </div>
+        {/* Form Card */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                 {error}
@@ -280,25 +265,26 @@ export default function EditCityPage() {
               </p>
             </div>
 
-            {/* Botones */}
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-              <Link
-                href={`/admin/cities/${params.id}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cancelar
-              </Link>
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            </div>
-          </form>
+              {/* Botones */}
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <Link
+                  href={`/admin/cities/${params.id}`}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancelar
+                </Link>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   )
 }

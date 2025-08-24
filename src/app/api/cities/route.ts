@@ -43,9 +43,11 @@ export async function GET(request: NextRequest) {
           id: city.id,
           name: city.name,
           description: city.description,
-          imageUrl: city.imageUrl,
+          image: city.image, // Usar 'image' para consistencia con schema
           country: city.country,
-          coffeeShopsCount: count || 0,
+          latitude: city.latitude,
+          longitude: city.longitude,
+          coffeeShopCount: count || 0, // Usar 'coffeeShopCount' para consistencia con frontend
           createdAt: city.createdAt,
           updatedAt: city.updatedAt
         }
@@ -74,18 +76,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, imageUrl, country } = body
+    const { name, description, image, country, latitude, longitude } = body
 
     // Validar datos requeridos
-    if (!name || !description) {
+    if (!name || !description || !country) {
       return NextResponse.json(
-        { success: false, error: 'Nombre y descripción son requeridos' },
+        { success: false, error: 'Nombre, descripción y país son requeridos' },
+        { status: 400 }
+      )
+    }
+
+    // Validar coordenadas
+    if (!latitude || !longitude) {
+      return NextResponse.json(
+        { success: false, error: 'Latitud y longitud son requeridas' },
         { status: 400 }
       )
     }
 
     // Crear ID único basado en el nombre (slug)
-    const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now()
 
     const { data: city, error } = await supabase
       .from('City')
@@ -94,8 +104,11 @@ export async function POST(request: NextRequest) {
           id,
           name,
           description,
-          imageUrl: imageUrl || null,
-          country: country || 'España'
+          image: image || null,
+          country,
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+          isActive: true
         }
       ])
       .select()
