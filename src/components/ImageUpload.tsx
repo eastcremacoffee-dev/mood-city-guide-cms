@@ -55,10 +55,17 @@ export default function ImageUpload({
       const formData = new FormData()
       formData.append('file', file)
 
+      // Crear un AbortController para timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 segundos timeout
+
       const response = await fetch(`/api/upload?folder=${folder}`, {
         method: 'POST',
         body: formData,
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       const data = await response.json()
 
@@ -75,11 +82,25 @@ export default function ImageUpload({
         // Limpiar preview local
         URL.revokeObjectURL(localPreview)
       } else {
-        setError(data.error || 'Error al subir la imagen')
+        const errorMsg = data.error || 'Error al subir la imagen'
+        const errorDetails = data.details ? ` (${data.details})` : ''
+        setError(`${errorMsg}${errorDetails}`)
         setPreviewUrl(currentImage || '')
+        console.error('Upload error details:', data)
       }
-    } catch (_err) {
-      setError('Error de conexión')
+    } catch (err) {
+      console.error('Network error:', err)
+      
+      let errorMessage = 'Error de conexión'
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          errorMessage = 'Timeout: La imagen es muy grande o la conexión es lenta'
+        } else {
+          errorMessage = `Error de conexión: ${err.message}`
+        }
+      }
+      
+      setError(errorMessage)
       setPreviewUrl(currentImage || '')
     } finally {
       setUploading(false)

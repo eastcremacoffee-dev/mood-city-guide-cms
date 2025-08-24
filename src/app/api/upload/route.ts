@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar tamaño (máximo 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    // Validar tamaño (máximo 5MB para evitar timeouts)
+    const maxSize = 5 * 1024 * 1024 // 5MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: 'File too large. Maximum size is 10MB.' },
+        { success: false, error: 'File too large. Maximum size is 5MB.' },
         { status: 400 }
       )
     }
@@ -64,8 +64,33 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error)
+    
+    // Capturar diferentes tipos de errores
+    let errorMessage = 'Upload failed'
+    let errorDetails = 'Unknown error'
+    
+    if (error instanceof Error) {
+      errorDetails = error.message
+      
+      // Errores específicos de Cloudinary
+      if (error.message.includes('timeout')) {
+        errorMessage = 'Connection timeout - try with a smaller image'
+      } else if (error.message.includes('network')) {
+        errorMessage = 'Network error - check your connection'
+      } else if (error.message.includes('Invalid')) {
+        errorMessage = 'Invalid image format'
+      } else if (error.message.includes('size')) {
+        errorMessage = 'Image too large'
+      }
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Upload failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        success: false, 
+        error: errorMessage, 
+        details: errorDetails,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
