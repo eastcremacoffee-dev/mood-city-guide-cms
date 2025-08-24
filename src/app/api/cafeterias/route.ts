@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       imageUrl,
       openingHours,
       priceRange,
-      images
+      images,
+      selectedFeatures
     } = body
 
     // Validar datos requeridos
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest) {
     if (website) insertData.website = website
     if (openingHours) insertData.openingHours = openingHours
     if (priceRange) insertData.priceRange = priceRange
+    if (selectedFeatures && Array.isArray(selectedFeatures)) insertData.features = selectedFeatures
 
     const { data: coffeeShop, error } = await supabase
       .from('CoffeeShop')
@@ -243,22 +245,24 @@ export async function PUT(request: NextRequest) {
 
     // Manejar características (features) si se proporcionan
     if (selectedFeatures && Array.isArray(selectedFeatures)) {
-      // Eliminar características existentes
-      await supabase
-        .from('CoffeeShopFeature')
-        .delete()
-        .eq('coffeeShopId', id)
+      console.log('Updating features for coffee shop:', id, 'with features:', selectedFeatures)
+      
+      // Actualizar las features directamente en la columna features de CoffeeShop
+      const { error: featuresError } = await supabase
+        .from('CoffeeShop')
+        .update({ features: selectedFeatures })
+        .eq('id', id)
 
-      // Agregar nuevas características
-      if (selectedFeatures.length > 0) {
-        const featureInserts = selectedFeatures.map(featureId => ({
-          coffeeShopId: id,
-          featureId: featureId
-        }))
-
-        await supabase
-          .from('CoffeeShopFeature')
-          .insert(featureInserts)
+      if (featuresError) {
+        console.error('Error updating features:', featuresError)
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Error al actualizar características',
+            details: featuresError.message
+          },
+          { status: 500 }
+        )
       }
     }
 
