@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
           id: city.id,
           name: city.name,
           description: city.description,
-          image: city.image, // Usar 'image' para consistencia con schema
+          image: city.imageUrl, // Usar 'imageUrl' que es el campo real en tu DB
           country: city.country,
           latitude: city.latitude,
           longitude: city.longitude,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           id,
           name,
           description,
-          image: image || null,
+          imageUrl: image || null,
           country,
           latitude: parseFloat(latitude),
           longitude: parseFloat(longitude),

@@ -54,7 +54,7 @@ export async function GET(
       latitude: city.latitude,
       longitude: city.longitude,
       description: city.description,
-      image: city.image,
+              image: city.imageUrl,
       isActive: city.isActive,
       coffeeShopCount: coffeeShops?.length || 0,
       coffeeShops: coffeeShops || [],
