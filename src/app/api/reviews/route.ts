@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// GET /api/reviews - Obtener todas las reviews (con filtros opcionales)
+// GET /api/reviews - Obtener todas las reviews
 export async function GET(request: NextRequest) {
+  console.log('GET /api/reviews called')
+  
   try {
     const { searchParams } = new URL(request.url)
     const coffeeShopId = searchParams.get('coffeeShopId')
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Por ahora, devolver reviews vacías
+    console.log('GET params:', { coffeeShopId, limit, offset })
+
+    // Devolver reviews vacías por ahora
     return NextResponse.json({
       success: true,
       data: [],
@@ -21,7 +25,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error fetching reviews:', error)
+    console.error('GET Error:', error)
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }
@@ -31,14 +35,17 @@ export async function GET(request: NextRequest) {
 
 // POST /api/reviews - Crear nueva review
 export async function POST(request: NextRequest) {
+  console.log('POST /api/reviews called')
+  
   try {
     const body = await request.json()
+    console.log('POST body received:', body)
+    
     const { userId, coffeeShopId, rating, comment } = body
-
-    console.log('Creating review:', { userId, coffeeShopId, rating, comment })
 
     // Validaciones básicas
     if (!userId || !coffeeShopId || !rating) {
+      console.log('Validation failed: missing required fields')
       return NextResponse.json(
         { success: false, error: 'userId, coffeeShopId y rating son requeridos' },
         { status: 400 }
@@ -46,32 +53,35 @@ export async function POST(request: NextRequest) {
     }
 
     if (rating < 1 || rating > 5) {
+      console.log('Validation failed: invalid rating')
       return NextResponse.json(
         { success: false, error: 'El rating debe estar entre 1 y 5' },
         { status: 400 }
       )
     }
 
-    // Simular creación exitosa de review
+    // Crear review simulada
+    const reviewId = `review-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const now = new Date().toISOString()
+    
     const newReview = {
-      id: `review-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      userId,
-      rating,
+      id: reviewId,
+      rating: parseInt(rating),
       comment: comment || null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       user: {
         id: userId,
         name: 'Usuario Anónimo',
         avatar: null
       },
-      coffee_shop: {
+      coffeeShop: {
         id: coffeeShopId,
-        name: 'East Crema Coffee Hermosilla'
+        name: 'East Crema Coffee'
       }
     }
 
-    console.log('Review created successfully:', newReview.id)
+    console.log('Review created successfully:', reviewId)
 
     return NextResponse.json({
       success: true,
@@ -79,10 +89,22 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Error creating review:', error)
+    console.error('POST Error:', error)
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
+}
+
+// OPTIONS para CORS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
 }
