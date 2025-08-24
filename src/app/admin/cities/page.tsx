@@ -18,6 +18,7 @@ export default function CitiesPage() {
   const [cities, setCities] = useState<City[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     fetchCities()
@@ -37,6 +38,34 @@ export default function CitiesPage() {
       setError('Error de conexión')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async (cityId: string, cityName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar la ciudad "${cityName}"?`)) {
+      return
+    }
+
+    setDeleting(cityId)
+    setError('')
+
+    try {
+      const response = await fetch(`/api/cities?id=${cityId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Recargar la lista de ciudades
+        await fetchCities()
+      } else {
+        setError(data.error || 'Error al eliminar la ciudad')
+      }
+    } catch (_err) {
+      setError('Error de conexión al eliminar la ciudad')
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -197,8 +226,12 @@ export default function CitiesPage() {
                       <div className="flex-shrink-0">
                         <img
                           className="h-16 w-16 rounded-lg object-cover"
-                          src={city.image}
+                          src={city.image || '/placeholder-city.jpg'}
                           alt={city.name}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAyNEgyNFYyOEgyMFYyNFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHA+dGggZD0iTTI4IDI0SDMyVjI4SDI4VjI0WiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMzYgMjRINDBWMjhIMzZWMjRaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik00NCAyNEg0OFYyOEg0NFYyNFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHA+dGggZD0iTTIwIDMySDI0VjM2SDIwVjMyWiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNMjggMzJIMzJWMzZIMjhWMzJaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0zNiAzMkg0MFYzNkgzNlYzMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHA+dGggZD0iTTQ0IDMySDQ4VjM2SDQ0VjMyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'
+                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -236,6 +269,14 @@ export default function CitiesPage() {
                       >
                         Editar
                       </Link>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        onClick={() => handleDelete(city.id, city.name)}
+                        disabled={deleting === city.id}
+                        className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deleting === city.id ? 'Eliminando...' : 'Eliminar'}
+                      </button>
                     </div>
                   </div>
                 </li>

@@ -153,3 +153,95 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// DELETE /api/cities - Eliminar ciudad
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const cityId = searchParams.get('id')
+
+    if (!cityId) {
+      return NextResponse.json(
+        { success: false, error: 'ID de ciudad requerido' },
+        { status: 400 }
+      )
+    }
+
+    console.log(`🗑️ Eliminando ciudad: ${cityId}`)
+
+    // Verificar si la ciudad existe
+    const { data: existingCity, error: fetchError } = await supabase
+      .from('City')
+      .select('id, name')
+      .eq('id', cityId)
+      .single()
+
+    if (fetchError || !existingCity) {
+      return NextResponse.json(
+        { success: false, error: 'Ciudad no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar si hay cafeterías asociadas
+    const { count: coffeeShopsCount, error: countError } = await supabase
+      .from('CoffeeShop')
+      .select('*', { count: 'exact', head: true })
+      .eq('cityId', cityId)
+
+    if (countError) {
+      console.error('Error checking coffee shops:', countError)
+      return NextResponse.json(
+        { success: false, error: 'Error al verificar cafeterías asociadas' },
+        { status: 500 }
+      )
+    }
+
+    // Si hay cafeterías asociadas, no permitir eliminar
+    if (coffeeShopsCount && coffeeShopsCount > 0) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `No se puede eliminar la ciudad "${existingCity.name}" porque tiene ${coffeeShopsCount} cafeterías asociadas. Elimina primero las cafeterías.`
+        },
+        { status: 400 }
+      )
+    }
+
+    // Eliminar la ciudad
+    const { error: deleteError } = await supabase
+      .from('City')
+      .delete()
+      .eq('id', cityId)
+
+    if (deleteError) {
+      console.error('Supabase delete error:', deleteError)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Error al eliminar ciudad',
+          details: deleteError.message
+        },
+        { status: 500 }
+      )
+    }
+
+    console.log(`✅ Ciudad eliminada exitosamente: ${existingCity.name}`)
+
+    return NextResponse.json({
+      success: true,
+      message: `Ciudad "${existingCity.name}" eliminada exitosamente`
+    })
+
+  } catch (error) {
+    console.error('Error deleting city:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
+  }
+}
