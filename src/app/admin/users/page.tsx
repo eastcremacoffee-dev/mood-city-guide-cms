@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/AdminLayout'
 
 interface User {
@@ -20,6 +21,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -392,7 +394,7 @@ export default function UsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                          onClick={() => router.push(`/admin/users/${user.id}`)}
                           className="text-blue-600 hover:text-blue-900 transition-colors"
                         >
                           Ver
