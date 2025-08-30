@@ -8,6 +8,10 @@ interface User {
   fullName: string
   email: string
   appleId?: string
+  bio?: string
+  location?: string
+  favoriteType?: string
+  profileImageURL?: string
   createdAt: string
   lastLogin?: string
   isActive: boolean
@@ -20,6 +24,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchUsers()
@@ -28,45 +33,69 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true)
-      // Simular datos de usuarios ya que no tenemos endpoint específico
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          fullName: 'Usuario Demo',
-          email: 'demo@example.com',
-          appleId: 'apple_user_123',
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString(),
-          isActive: true,
-          reviewsCount: 5,
-          favoritesCount: 12
-        },
-        {
-          id: '2',
-          fullName: 'María García',
-          email: 'maria@example.com',
-          appleId: 'apple_user_456',
-          createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-          lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(),
-          isActive: true,
-          reviewsCount: 3,
-          favoritesCount: 8
-        },
-        {
-          id: '3',
-          fullName: 'Carlos López',
-          email: 'carlos@example.com',
-          appleId: 'apple_user_789',
-          createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-          lastLogin: new Date(Date.now() - 86400000 * 5).toISOString(),
-          isActive: false,
-          reviewsCount: 1,
-          favoritesCount: 3
-        }
-      ]
-      setUsers(mockUsers)
-    } catch (_err) {
-      setError(_err instanceof Error ? _err.message : 'Error desconocido')
+      
+      // Intentar obtener usuarios reales de la API
+      const response = await fetch('/api/users')
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        setUsers(result.data)
+        console.log(`✅ ${result.data.length} usuarios cargados desde la API`)
+      } else {
+        // Fallback a datos simulados si la API falla
+        console.log('⚠️ API falló, usando datos simulados')
+        const mockUsers: User[] = [
+          {
+            id: '1',
+            fullName: 'Usuario Demo',
+            email: 'demo@example.com',
+            appleId: 'apple_user_123',
+            bio: 'Amante del café y explorador de nuevas cafeterías por la ciudad.',
+            location: 'Madrid, España',
+            favoriteType: 'Cappuccino',
+            profileImageURL: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
+            isActive: true,
+            reviewsCount: 5,
+            favoritesCount: 12
+          },
+          {
+            id: '2',
+            fullName: 'María García',
+            email: 'maria@example.com',
+            appleId: 'apple_user_456',
+            bio: 'Diseñadora gráfica que disfruta trabajando en cafeterías con buen ambiente.',
+            location: 'Barcelona, España',
+            favoriteType: 'Latte',
+            profileImageURL: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+            createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+            lastLogin: new Date(Date.now() - 86400000 * 2).toISOString(),
+            isActive: true,
+            reviewsCount: 3,
+            favoritesCount: 8
+          },
+          {
+            id: '3',
+            fullName: 'Carlos López',
+            email: 'carlos@example.com',
+            appleId: 'apple_user_789',
+            bio: 'Estudiante universitario en busca de lugares tranquilos para estudiar.',
+            location: 'Valencia, España',
+            favoriteType: 'Americano',
+            profileImageURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+            createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+            lastLogin: new Date(Date.now() - 86400000 * 5).toISOString(),
+            isActive: false,
+            reviewsCount: 1,
+            favoritesCount: 3
+          }
+        ]
+        setUsers(mockUsers)
+      }
+    } catch (err) {
+      console.error('❌ Error cargando usuarios:', err)
+      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
     }
@@ -83,6 +112,38 @@ export default function UsersPage() {
       console.log(`Toggle status for user ${userId}`)
     } catch (_err) {
       alert('Error al cambiar el estado del usuario')
+    }
+  }
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar al usuario "${userName}"? Esta acción no se puede deshacer.`)) {
+      return
+    }
+
+    try {
+      setDeletingUserId(userId)
+      
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error eliminando usuario')
+      }
+
+      // Actualizar la lista de usuarios
+      setUsers(users.filter(user => user.id !== userId))
+      
+      alert('Usuario eliminado exitosamente')
+    } catch (err: any) {
+      alert(`Error eliminando usuario: ${err.message}`)
+    } finally {
+      setDeletingUserId(null)
     }
   }
 
@@ -241,6 +302,9 @@ export default function UsersPage() {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Perfil
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actividad
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -257,11 +321,19 @@ export default function UsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">
-                              {user.fullName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          {user.profileImageURL ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={user.profileImageURL}
+                              alt={user.fullName}
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.fullName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
@@ -270,6 +342,11 @@ export default function UsersPage() {
                           <div className="text-sm text-gray-500">
                             {user.email}
                           </div>
+                          {user.location && (
+                            <div className="text-xs text-gray-400">
+                              📍 {user.location}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -281,6 +358,20 @@ export default function UsersPage() {
                       }`}>
                         {user.isActive ? 'Activo' : 'Inactivo'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="max-w-xs">
+                        {user.bio && (
+                          <div className="truncate text-xs mb-1">
+                            "{user.bio}"
+                          </div>
+                        )}
+                        {user.favoriteType && (
+                          <div className="text-xs">
+                            ☕ {user.favoriteType}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>
@@ -299,16 +390,41 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => toggleUserStatus(user.id)}
-                        className={`${
-                          user.isActive
-                            ? 'text-red-600 hover:text-red-900'
-                            : 'text-green-600 hover:text-green-900'
-                        }`}
-                      >
-                        {user.isActive ? 'Desactivar' : 'Activar'}
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => window.open(`/admin/users/${user.id}`, '_blank')}
+                          className="text-blue-600 hover:text-blue-900 transition-colors"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => toggleUserStatus(user.id)}
+                          className={`transition-colors ${
+                            user.isActive
+                              ? 'text-yellow-600 hover:text-yellow-900'
+                              : 'text-green-600 hover:text-green-900'
+                          }`}
+                        >
+                          {user.isActive ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id, user.fullName)}
+                          disabled={deletingUserId === user.id}
+                          className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deletingUserId === user.id ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Eliminando...
+                            </span>
+                          ) : (
+                            'Eliminar'
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
