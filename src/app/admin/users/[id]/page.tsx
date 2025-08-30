@@ -82,7 +82,6 @@ export default function UserDetailPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    console.log('🔍 UserDetailPage loaded with delete functionality')
     fetchUserData()
   }, [userId])
 
@@ -317,7 +316,6 @@ export default function UserDetailPage() {
   }
 
   const handleDeleteUser = async () => {
-    console.log('🗑️ handleDeleteUser called')
     if (!user) return
 
     if (!confirm(`¿Estás seguro de que quieres eliminar al usuario "${user.fullName}"? Esta acción no se puede deshacer.`)) {
@@ -383,13 +381,13 @@ export default function UserDetailPage() {
         <div className="flex justify-between items-start">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => window.history.back()}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={() => router.push('/admin/users')}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
             >
               ← Volver
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Detalle del Usuario - VERSIÓN CON ELIMINAR</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Detalle del Usuario</h1>
               <p className="mt-1 text-sm text-gray-500">
                 Información completa del perfil de usuario
               </p>
