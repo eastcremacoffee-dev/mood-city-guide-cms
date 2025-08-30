@@ -269,7 +269,7 @@ export default function UserDetailPage() {
               ← Volver
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Detalle del Usuario</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Detalle del Usuario - VERSIÓN CON ELIMINAR</h1>
               <p className="mt-1 text-sm text-gray-500">
                 Información completa del perfil de usuario
               </p>
