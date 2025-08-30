@@ -70,3 +70,4 @@ Después de ejecutar los SQLs:
 - ✅ Cafeterías asociadas correctamente
 - ✅ CRUD completo para ciudades
 - ✅ Estadísticas y conteos automáticos
+

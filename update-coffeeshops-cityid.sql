@@ -17,3 +17,4 @@ WHERE "cityId" IS NULL OR "cityId" = '';
 
 -- Verificar la actualización
 SELECT id, name, address, "cityId" FROM "CoffeeShop" LIMIT 10;
+

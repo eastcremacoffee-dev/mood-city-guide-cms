@@ -49,6 +49,7 @@ export default function UserDetailPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
+    console.log('🔍 UserDetailPage loaded with delete functionality')
     fetchUserData()
   }, [userId])
 
@@ -196,6 +197,7 @@ export default function UserDetailPage() {
   }
 
   const handleDeleteUser = async () => {
+    console.log('🗑️ handleDeleteUser called')
     if (!user) return
 
     if (!confirm(`¿Estás seguro de que quieres eliminar al usuario "${user.fullName}"? Esta acción no se puede deshacer.`)) {

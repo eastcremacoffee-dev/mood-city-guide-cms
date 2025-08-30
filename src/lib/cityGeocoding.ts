@@ -48,3 +48,4 @@ export async function geocodeCity(cityName: string, country: string): Promise<Ci
     throw error
   }
 }
+

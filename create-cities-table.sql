@@ -46,3 +46,4 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Verificar que la tabla se creó correctamente
 SELECT * FROM "City" LIMIT 5;
+
