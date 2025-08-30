@@ -13,6 +13,7 @@ interface User {
   location?: string
   favoriteType?: string
   profileImageURL?: string
+  language?: string
   createdAt: string
   lastLogin?: string
   isActive: boolean
@@ -35,6 +36,35 @@ interface UserFavorite {
   addedAt: string
 }
 
+interface UserVisit {
+  id: string
+  coffeeShopName: string
+  visitDate: string
+  durationMinutes: number
+  rating: number
+  notes: string
+}
+
+interface UserReferral {
+  id: string
+  referredUserName: string
+  referredUserEmail: string
+  status: string
+  createdAt: string
+  completedAt?: string
+}
+
+interface UserNotification {
+  id: string
+  title: string
+  message: string
+  type: string
+  status: string
+  priority: string
+  createdAt: string
+  readAt?: string
+}
+
 export default function UserDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -43,9 +73,12 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null)
   const [reviews, setReviews] = useState<UserReview[]>([])
   const [favorites, setFavorites] = useState<UserFavorite[]>([])
+  const [visits, setVisits] = useState<UserVisit[]>([])
+  const [referrals, setReferrals] = useState<UserReferral[]>([])
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'profile' | 'reviews' | 'favorites'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'reviews' | 'favorites' | 'visits' | 'referrals' | 'notifications'>('profile')
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
@@ -66,6 +99,9 @@ export default function UserDetailPage() {
         setUser(userData)
         setReviews(userData.reviews || [])
         setFavorites(userData.favorites || [])
+        setVisits(userData.visits || [])
+        setReferrals(userData.referrals || [])
+        setNotifications(userData.notifications || [])
         console.log(`✅ Usuario ${userId} cargado desde la API`)
         return
       }
@@ -176,6 +212,90 @@ export default function UserDetailPage() {
 
       setReviews(mockReviews.slice(0, foundUser.reviewsCount))
       setFavorites(mockFavorites.slice(0, foundUser.favoritesCount))
+      
+      // Simular visitas del usuario
+      const mockVisits: UserVisit[] = [
+        {
+          id: '1',
+          coffeeShopName: 'Café Central',
+          visitDate: new Date(Date.now() - 86400000 * 2).toISOString(),
+          durationMinutes: 45,
+          rating: 5,
+          notes: 'Excelente café y ambiente muy acogedor'
+        },
+        {
+          id: '2',
+          coffeeShopName: 'Starbucks Plaza Mayor',
+          visitDate: new Date(Date.now() - 86400000 * 5).toISOString(),
+          durationMinutes: 30,
+          rating: 4,
+          notes: 'Buen servicio aunque un poco ruidoso'
+        },
+        {
+          id: '3',
+          coffeeShopName: 'Toma Café',
+          visitDate: new Date(Date.now() - 86400000 * 10).toISOString(),
+          durationMinutes: 60,
+          rating: 5,
+          notes: 'Mi lugar favorito para trabajar'
+        }
+      ]
+
+      // Simular referidos del usuario
+      const mockReferrals: UserReferral[] = [
+        {
+          id: '1',
+          referredUserName: 'Ana García',
+          referredUserEmail: 'ana@example.com',
+          status: 'completed',
+          createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
+          completedAt: new Date(Date.now() - 86400000 * 10).toISOString()
+        },
+        {
+          id: '2',
+          referredUserName: 'Carlos López',
+          referredUserEmail: 'carlos@example.com',
+          status: 'pending',
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
+        }
+      ]
+
+      // Simular notificaciones del usuario
+      const mockNotifications: UserNotification[] = [
+        {
+          id: '1',
+          title: 'Bienvenido a MoodCityGuide',
+          message: 'Gracias por unirte a nuestra comunidad de amantes del café',
+          type: 'system',
+          status: 'read',
+          priority: 'normal',
+          createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+          readAt: new Date(Date.now() - 86400000 * 29).toISOString()
+        },
+        {
+          id: '2',
+          title: 'Nueva cafetería cerca',
+          message: 'Hemos añadido una nueva cafetería a 500m de tu ubicación',
+          type: 'general',
+          status: 'read',
+          priority: 'normal',
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+          readAt: new Date(Date.now() - 86400000 * 2).toISOString()
+        },
+        {
+          id: '3',
+          title: 'Oferta especial',
+          message: '20% de descuento en tu próxima visita a Café Central',
+          type: 'promotion',
+          status: 'unread',
+          priority: 'high',
+          createdAt: new Date(Date.now() - 86400000 * 1).toISOString()
+        }
+      ]
+
+      setVisits(mockVisits)
+      setReferrals(mockReferrals)
+      setNotifications(mockNotifications)
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
@@ -355,7 +475,7 @@ export default function UserDetailPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
@@ -409,6 +529,63 @@ export default function UserDetailPage() {
               </div>
             </div>
           </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Visitas</dt>
+                    <dd className="text-lg font-medium text-gray-900">{visits.length}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Referidos</dt>
+                    <dd className="text-lg font-medium text-gray-900">{referrals.length}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-2H4v2zM16 3H4v14h12V3z" />
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Notificaciones</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {notifications.filter(n => n.status === 'unread').length} sin leer
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -445,6 +622,36 @@ export default function UserDetailPage() {
               >
                 Favoritos ({user.favoritesCount})
               </button>
+              <button
+                onClick={() => setActiveTab('visits')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'visits'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Visitas ({visits.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('referrals')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'referrals'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Referencias ({referrals.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('notifications')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'notifications'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Notificaciones ({notifications.filter(n => n.status === 'unread').length})
+              </button>
             </nav>
           </div>
 
@@ -469,6 +676,35 @@ export default function UserDetailPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Tipo de Café Favorito</label>
                       <p className="mt-1 text-sm text-gray-900">{user.favoriteType || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Idioma</label>
+                      <div className="mt-1 flex items-center space-x-2">
+                        <span className="text-sm text-gray-900">
+                          {user.language === 'es' ? '🇪🇸 Español' : 
+                           user.language === 'en' ? '🇺🇸 English' :
+                           user.language === 'fr' ? '🇫🇷 Français' :
+                           user.language === 'de' ? '🇩🇪 Deutsch' :
+                           user.language === 'it' ? '🇮🇹 Italiano' :
+                           user.language === 'pt' ? '🇵🇹 Português' :
+                           '🇪🇸 Español (por defecto)'}
+                        </span>
+                        <select 
+                          className="ml-2 text-xs border border-gray-300 rounded px-2 py-1"
+                          defaultValue={user.language || 'es'}
+                          onChange={(e) => {
+                            // Aquí iría la lógica para actualizar el idioma
+                            console.log('Cambiar idioma a:', e.target.value)
+                          }}
+                        >
+                          <option value="es">🇪🇸 Español</option>
+                          <option value="en">🇺🇸 English</option>
+                          <option value="fr">🇫🇷 Français</option>
+                          <option value="de">🇩🇪 Deutsch</option>
+                          <option value="it">🇮🇹 Italiano</option>
+                          <option value="pt">🇵🇹 Português</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                   {user.bio && (
@@ -541,6 +777,160 @@ export default function UserDetailPage() {
                   </div>
                 ) : (
                   <p className="text-gray-500">No hay favoritos disponibles.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'visits' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">Historial de Visitas</h3>
+                {visits.length > 0 ? (
+                  <div className="space-y-4">
+                    {visits.map((visit) => (
+                      <div key={visit.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{visit.coffeeShopName}</h4>
+                            <div className="mt-2 grid grid-cols-2 gap-4 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">Fecha:</span> {new Date(visit.visitDate).toLocaleDateString()}
+                              </div>
+                              <div>
+                                <span className="font-medium">Duración:</span> {visit.durationMinutes} min
+                              </div>
+                              <div className="flex items-center">
+                                <span className="font-medium mr-2">Rating:</span>
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      className={`h-4 w-4 ${
+                                        i < visit.rating ? 'text-yellow-400' : 'text-gray-300'
+                                      }`}
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                    </svg>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            {visit.notes && (
+                              <div className="mt-2">
+                                <span className="font-medium text-sm text-gray-600">Notas:</span>
+                                <p className="text-sm text-gray-700 mt-1">{visit.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No hay visitas registradas.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'referrals' && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-gray-900">Referencias y Referidos</h3>
+                {referrals.length > 0 ? (
+                  <div className="space-y-4">
+                    {referrals.map((referral) => (
+                      <div key={referral.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{referral.referredUserName}</h4>
+                            <p className="text-sm text-gray-600">{referral.referredUserEmail}</p>
+                            <div className="mt-2 flex items-center space-x-4">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                referral.status === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : referral.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {referral.status === 'completed' ? 'Completado' : 
+                                 referral.status === 'pending' ? 'Pendiente' : 'Expirado'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Referido: {new Date(referral.createdAt).toLocaleDateString()}
+                              </span>
+                              {referral.completedAt && (
+                                <span className="text-xs text-gray-500">
+                                  Completado: {new Date(referral.completedAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No hay referidos registrados.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'notifications' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Notificaciones</h3>
+                  <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                    Enviar Notificación
+                  </button>
+                </div>
+                {notifications.length > 0 ? (
+                  <div className="space-y-4">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className={`border rounded-lg p-4 ${
+                        notification.status === 'unread' ? 'border-blue-200 bg-blue-50' : 'border-gray-200'
+                      }`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                notification.type === 'system' ? 'bg-gray-100 text-gray-800' :
+                                notification.type === 'promotion' ? 'bg-green-100 text-green-800' :
+                                notification.type === 'general' ? 'bg-blue-100 text-blue-800' :
+                                'bg-purple-100 text-purple-800'
+                              }`}>
+                                {notification.type === 'system' ? 'Sistema' :
+                                 notification.type === 'promotion' ? 'Promoción' :
+                                 notification.type === 'general' ? 'General' : 'Referido'}
+                              </span>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                notification.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                notification.priority === 'normal' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {notification.priority === 'high' ? 'Alta' :
+                                 notification.priority === 'normal' ? 'Normal' : 'Baja'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 mt-2">{notification.message}</p>
+                            <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                              <span>Enviado: {new Date(notification.createdAt).toLocaleDateString()}</span>
+                              {notification.readAt && (
+                                <span>Leído: {new Date(notification.readAt).toLocaleDateString()}</span>
+                              )}
+                              <span className={`font-medium ${
+                                notification.status === 'unread' ? 'text-blue-600' : 'text-gray-500'
+                              }`}>
+                                {notification.status === 'unread' ? 'Sin leer' : 'Leído'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No hay notificaciones.</p>
                 )}
               </div>
             )}
